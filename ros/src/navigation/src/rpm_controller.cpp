@@ -49,7 +49,7 @@ rpm_controller::rpm_controller():
     current_rpm_act(NUM_MOTORS),
     previous_rpm_des(NUM_MOTORS),
     pwms(NUM_MOTORS),
-    control_sys_en(true)
+    control_sys_en(false)
 {
     double loop_rate, min_rpm, max_rpm, Kp, Ki;
     nh.getParam("loop_rate", loop_rate);

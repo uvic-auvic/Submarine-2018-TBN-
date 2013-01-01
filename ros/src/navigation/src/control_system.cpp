@@ -211,7 +211,7 @@ void control_system::compute_output_vectors(navigation::nav &msg)
         }
         if(control_enables.yaw_enable)
         {
-            msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
+            msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->angular_rate.z);
         }
     }
     else

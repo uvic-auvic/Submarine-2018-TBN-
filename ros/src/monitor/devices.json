@@ -9,7 +9,7 @@
     },
     
     "power_board" : {
-        "ignore" : true,
+        "ignore" : false,
         "baud" : 9600,
         "ack_message" : "RID\n",
         "ack_response" : "Power_Board\r\n",
@@ -18,7 +18,7 @@
     },
 
     "hydrophones" : {
-	"ignore" : true,
+	"ignore" : false,
         "baud" : 115200,
         "ack_message" : "RID\n",
         "ack_response" : "Hydrophones v1.0\r\n",

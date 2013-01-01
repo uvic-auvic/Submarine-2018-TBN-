@@ -240,7 +240,7 @@ bool imu::get_mag_accel_gyro_stable
     // Get gyroscope vector (rad/sec)
     gyro.x = ((int16_t)((response_buffer[13] << 8) | response_buffer[14])) * gyro_gain_scale / 32768000.0;
     gyro.y = ((int16_t)((response_buffer[15] << 8) | response_buffer[16])) * gyro_gain_scale / 32768000.0;
-    gyro.z = ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
+    gyro.z = 180 * ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
 
     // Get timestamp (ms)
     time = ((uint16_t)((response_buffer[19] << 8) | response_buffer[20])) * 6.5536;
@@ -278,7 +278,7 @@ bool imu::get_mag_accel_gyro
     // Get gyroscope vector (rad/sec)
     gyro.x = ((int16_t)((response_buffer[13] << 8) | response_buffer[14])) * gyro_gain_scale / 32768000.0;
     gyro.y = ((int16_t)((response_buffer[15] << 8) | response_buffer[16])) * gyro_gain_scale / 32768000.0;
-    gyro.z = ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
+    gyro.z = 180 * ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
 
     // Get timestamp (ms)
     time = ((uint16_t)((response_buffer[19] << 8) | response_buffer[20])) * 6.5536;

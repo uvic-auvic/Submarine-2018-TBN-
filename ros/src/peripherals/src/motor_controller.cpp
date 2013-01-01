@@ -17,10 +17,10 @@
 #define MAX_MOTOR_VALUE (999)
 
 #define X_LEFT_MULT             (-1)
-#define X_RIGHT_MULT            (-1)
+#define X_RIGHT_MULT            (1.35)
 #define Y_FRONT_MULT            (1)
 #define Y_BACK_MULT             (-1)
-#define Z_FRONT_RIGHT_MULT      (-1)
+#define Z_FRONT_RIGHT_MULT      (1)
 #define Z_FRONT_LEFT_MULT       (1)
 #define Z_BACK_RIGHT_MULT       (-1)
 #define Z_BACK_LEFT_MULT        (1)
@@ -46,7 +46,7 @@ public:
 
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
-    std::vector<int> pwm_multipliers;
+    std::vector<double> pwm_multipliers;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
 };
 

@@ -15,20 +15,20 @@
     <arg name="Ki_vel_z" default="0.2"/>
 
     <!-- Position Pitch Control System -->
-    <arg name="Kp_pos_p" default="3"/>
-    <arg name="Ki_pos_p" default="3"/>
-    <arg name="Kp_vel_p" default="0.01"/>
-    <arg name="Ki_vel_p" default="0.05"/>
+    <arg name="Kp_pos_p" default="15"/>
+    <arg name="Ki_pos_p" default="15"/>
+    <arg name="Kp_vel_p" default="0.05"/>
+    <arg name="Ki_vel_p" default="0.005"/>
 
     <!-- Position Roll Control System -->
-    <arg name="Kp_pos_r" default="3"/>
-    <arg name="Ki_pos_r" default="3"/>
+    <arg name="Kp_pos_r" default="15"/>
+    <arg name="Ki_pos_r" default="15"/>
     <arg name="Kp_vel_r" default="0.01"/>
-    <arg name="Ki_vel_r" default="0.05"/>
+    <arg name="Ki_vel_r" default="0.002"/>
     
     <!-- Velocity Yaw Control System -->
-    <arg name="Kp_vel_yw" default="1"/>
-    <arg name="Ki_vel_yw" default="2"/>
+    <arg name="Kp_vel_yw" default="0.85"/>
+    <arg name="Ki_vel_yw" default="0.038"/>
     
     <node name ="control_system" pkg="navigation" type="control_system" required="true">
         <param name="loop_rate" value="$(arg loop_rate)"/>
