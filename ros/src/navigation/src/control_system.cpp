@@ -51,9 +51,9 @@ control_system::control_system():
     depth_calibrated(false)
 {
     // General Control System Parameters
-    double loop_rate, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
+    double dt, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
     double min_angl_vel, max_angl_vel, min_angl_pos, max_angl_pos;
-    nh.getParam("loop_rate", loop_rate);
+    nh.getParam("dt", dt);
     nh.getParam("min_linear_vel", min_lin_vel);
     nh.getParam("max_linear_vel", max_lin_vel);
     nh.getParam("min_linear_pos", min_lin_pos);
@@ -98,8 +98,6 @@ control_system::control_system():
     double Kp_vel_yw, Ki_vel_yw;
     nh.getParam("Kp_vel_yw", Kp_vel_yw);
     nh.getParam("Ki_vel_yw", Ki_vel_yw);
-
-    double dt = 1.0 / loop_rate;
 
     linear_vel_x = new velocity_controller(min_lin_vel, max_lin_vel, dt, Kp_vel_x, Ki_vel_x);
     linear_vel_y = new velocity_controller(min_lin_vel, max_lin_vel, dt, Kp_vel_y, Ki_vel_y);
@@ -164,13 +162,16 @@ void control_system::compute_output_vectors(navigation::nav &msg)
 {       
     if(depth_calibrated)
     {
-        msg.direction.x = linear_vel_x->calculate(current_request->forwards_velocity, imu_data->velocity.x);
+        //msg.direction.x = linear_vel_x->calculate(current_request->forwards_velocity, imu_data->velocity.x);
         msg.direction.y = linear_vel_y->calculate(current_request->sideways_velocity, imu_data->velocity.y);
-        msg.direction.z = linear_pos_z->calculate(current_request->depth, current_depth, imu_data->velocity.z);
+        //msg.direction.z = linear_pos_z->calculate(current_request->depth, current_depth, imu_data->velocity.z);
         ROS_INFO("Depth: %f, Desired Depth: %f", current_depth, current_request->depth);
-        msg.orientation.pitch = angular_pos_p->calculate(0, imu_data->euler_angles.pitch, imu_data->compensated_angular_rate.y);
-        msg.orientation.roll = angular_pos_r->calculate(0, imu_data->euler_angles.roll, imu_data->compensated_angular_rate.x);
-        msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
+        //msg.orientation.pitch = angular_pos_p->calculate(0, imu_data->euler_angles.pitch, imu_data->compensated_angular_rate.y);
+        msg.orientation.pitch = 0;
+        //msg.orientation.roll = angular_pos_r->calculate(0, imu_data->euler_angles.roll, imu_data->compensated_angular_rate.x);
+        msg.orientation.roll = 0;
+        //msg.orientation.yaw = -180;
+        //msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
     }
     else
     {

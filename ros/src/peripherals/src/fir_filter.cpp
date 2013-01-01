@@ -39,6 +39,14 @@ fir_filter::fir_filter(std::string csv_filename)
     file.close();
 }
 
+void fir_filter::clear_data()
+{
+    for(int i = 0; i < this->data.size(); i++)
+    {
+        this->add_data(0.0);
+    }
+}
+
 void fir_filter::add_data(double new_data)
 {
     // Append new data to the front of the list, and remove the oldest data

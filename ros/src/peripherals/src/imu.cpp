@@ -234,7 +234,7 @@ bool imu::get_mag_accel_gyro_stable
 
     // Get accelerometer vector (G's)
     accel.x = ((int16_t)((response_buffer[7] << 8) | response_buffer[8])) * accel_gain_scale / 32768000.0;
-    accel.y = ((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
+    accel.y = -((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
     accel.z = ((int16_t)((response_buffer[11] << 8) | response_buffer[12])) * accel_gain_scale / 32768000.0;
 
     // Get gyroscope vector (rad/sec)
@@ -272,7 +272,7 @@ bool imu::get_mag_accel_gyro
 
     // Get accelerometer vector (G's)
     accel.x = ((int16_t)((response_buffer[7] << 8) | response_buffer[8])) * accel_gain_scale / 32768000.0;
-    accel.y = ((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
+    accel.y = -((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
     accel.z = ((int16_t)((response_buffer[11] << 8) | response_buffer[12])) * accel_gain_scale / 32768000.0;
 
     // Get gyroscope vector (rad/sec)
@@ -287,7 +287,7 @@ bool imu::get_mag_accel_gyro
 }
 
 void imu::update_velocity()
-{     
+{
     static bool valid_data = false;
     geometry_msgs::Vector3 dummy_v;
     double dummy_d;
@@ -312,6 +312,16 @@ void imu::update_velocity()
     accel_true.x = this->accel_x_filter->get_result();
     accel_true.y = this->accel_y_filter->get_result();
     accel_true.z = this->accel_z_filter->get_result();
+
+    if(accel_true.x < 0.01 && accel_true.x > -0.01) {
+        accel_true.x = 0;
+    }
+    if(accel_true.y < 0.01 && accel_true.y > -0.01) {
+        accel_true.y = 0;
+    }
+    if(accel_true.z < 0.01 && accel_true.z > -0.01) {
+        accel_true.z = 0;
+    }
 
     // Check if this is the first time the function was called
     if(!valid_data) {   
@@ -353,6 +363,12 @@ void imu::get_velocity(geometry_msgs::Vector3 &velocity_vector) {
 
 bool imu::set_velocity(VelSetReq &req, VelSetRes &res) {
     this->velocity = req.velocity;
+    this->accel_x_filter->clear_data();
+    this->accel_y_filter->clear_data();
+    this->accel_z_filter->clear_data();
+    this->dvel_x_filter->clear_data();
+    this->dvel_y_filter->clear_data();
+    this->dvel_z_filter->clear_data();
     res.result_vel = this->velocity;
     return true;
 }

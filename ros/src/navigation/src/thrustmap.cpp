@@ -156,9 +156,9 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
         msg->direction.x / this->max_linear_rate, 
         msg->direction.y / this->max_linear_rate, 
         msg->direction.z / this->max_linear_rate, 
-        2*msg->orientation.pitch / this->max_angular_rate,
-        2*msg->orientation.roll / this->max_angular_rate,
-        2*msg->orientation.yaw / this->max_angular_rate
+        -8*msg->orientation.roll / this->max_angular_rate,
+        -8*msg->orientation.pitch / this->max_angular_rate,
+        16*msg->orientation.yaw / this->max_angular_rate
     };   
     double thruster_vals[Motor_Num] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);

@@ -4,9 +4,9 @@
     <arg name="topic_buffer_size" default="10"/>
     <arg name="device_id" default="imu"/>
     <arg name="publish_rate" default="3"/>
-    <arg name="updates_per_publish" default="10"/>
+    <arg name="updates_per_publish" default="30"/>
     <arg name="accel_filter_loc" default="$(find peripherals)/csv/lowpass.csv"/>
-    <arg name="vel_filter_loc" default="$(find peripherals)/csv/highpass.csv"/>
+    <arg name="vel_filter_loc" default="$(find peripherals)/csv/bandstop_tested.csv"/>
 
     <node name="$(arg node_name)" pkg="peripherals" type="imu" respawn="true" respawn_delay="1" >
         <param name="topic_name" value="$(arg topic_name)"/>
