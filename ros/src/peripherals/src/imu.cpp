@@ -12,7 +12,7 @@ using imu_msg = peripherals::imu;
 
 class imu{
 public:
-    imu(const std::string & port, int baud_rate = 11520, int timeout = 3000);
+    imu(const std::string & port, int baud_rate = 38400, int timeout = 3000);
     ~imu();
     void get_temperature();
 private:
@@ -24,7 +24,7 @@ private:
 imu::imu(const std::string & port, int baud_rate, int timeout) {
     ROS_INFO("Connecting to imu on port: %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
-    response_buffer = new uint8_t[7];
+    response_buffer = new uint8_t[23];
 }
 
 imu::~imu() {
@@ -48,8 +48,8 @@ void imu::get_temperature() {
     double temperature = (( (double)(((int) response_buffer[1] << 8) | (int) response_buffer[2]) * 5.0 / 65536) - 0.5) * 100.0;;
     ROS_INFO("Temp is : %f\n", temperature);
     ROS_INFO("Byte values are: ");
-    for (int i= 0; i < 7; i ++) {
-        ROS_INFO(" %d ", response_buffer[i]);
+    for (int i= 0; i < 23; i ++) {
+        ROS_INFO(" Byte %d : %x ", i+1, response_buffer[i]);
     }
 }
 
@@ -75,7 +75,7 @@ int main(int argc, char ** argv)
 
     /* Wait for callbacks */
     //ros::spin();
-    imu dev("/dev/ttyUSB0");
+    imu dev("/dev/ttyS3");
     ros::Rate r(4);
     while(ros::ok()) {
         dev.get_temperature();
