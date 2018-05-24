@@ -6,7 +6,7 @@
         <arg name="node_name" value="camera_one" />
         <arg name="record" value="false"/>
     </include>
-    <include file="$(find vision)/launchfiles/Sonia_bag.launch">
+    <include file="$(find vision)/launchfiles/sonia_bag.launch">
         <arg name="bag_location" value="/home/andy/code/Sonia_video/buoys/buoy_cloudy_morning_front_static_day1.bag"/>
         <arg name="node_name" value="player"/>
         <arg name="topic" value = "/provider_vision/Front_GigE"/>
