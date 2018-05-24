@@ -1,5 +1,20 @@
 <launch>
-    <include file="$(find vision)/launchfiles/camera_one.launch"/>
+
+    <include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="fd" value="/dev/video0" />
+        <arg name="topic_name" value="top_face_cam" />
+        <arg name="node_name" value="camera_one" />
+    </include>
+    <include file="$(find vision)/launchfiles/rosbag_conv.launch"/>
+    <!--
+    <include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="fd" value="/dev/video1" />
+        <arg name="topic_name" value="front_cam" />
+        <arg name="node_name" value="camera_two" />
+    </include>
+    -->
+        <!-- rosrun image_transport republish compressed in:=/provider_vision/Front_GE out:=/sensor_msgs/image -->
+
     <node name="web_video_server" pkg="web_video_server" type="web_video_server" required="true"/>
     <include file="$(find peripherals)/launchfiles/depth_node.launch"/>    
     <node name="roslibjs" pkg="rosbridge_server" type="rosbridge_websocket" required="true"/>
@@ -9,4 +24,7 @@
         <param name="services_glob" value="[*]" />
         <param name="params_glob" value="[*]" />
     </node>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="-l -q /home/andy/code/Sonia_video/buoys/Buoys1_26-10-01-54.bag"/>
+    <node name="republish" type="republish" pkg="image_transport" output="screen" args="compressed in:=/provider_vision/Front_GigE out:=/sensor_msgs/image" />
+
 </launch>
