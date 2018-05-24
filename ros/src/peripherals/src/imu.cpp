@@ -6,6 +6,8 @@
 
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/imu.h"
+#include "peripherals/orientation.h"
+#include "geometry_msgs/Vector3.h"
 
 #define RESPONSE_MAX_SIZE (23)
 
@@ -34,10 +36,12 @@ class imu{
 public:
     imu(const std::string & port, int baud_rate = 38400, int timeout = 3000);
     ~imu();
-    void get_temperature();
-    void get_euler_stable();
-    void get_mag_accel_gyro_stable();
-    void get_mag_accel_gyro();
+    bool get_temperature(double &temperature);
+    bool get_euler_stable(peripherals::orientation &euler_angles);
+    bool get_mag_accel_gyro_stable(geometry_msgs::Vector3 &mag, geometry_msgs::Vector3 &accel, 
+            geometry_msgs::Vector3 &gyro, double &time);
+    bool get_mag_accel_gyro(geometry_msgs::Vector3 &mag, geometry_msgs::Vector3 &accel, 
+            geometry_msgs::Vector3 &gyro, double &time);
 private:
     void write(uint8_t command, int response_bytes = 0);
     bool verify_response(int response_bytes);
@@ -126,126 +130,113 @@ bool imu::verify_response(int response_bytes) {
     }
 }
 
-void imu::get_temperature() {
+bool imu::get_temperature(double &temperature) {
     // Send temperature command
     write(TEMP_CMD, TEMP_SIZE);
 
     // Verify the checksum of the response
-    if(verify_response(TEMP_SIZE)) {
-        // Compute temperature (first 2 non-header bytes of response)
-        double temperature = (( (double)(((int) response_buffer[1] << 8) | (int) response_buffer[2]) * 5.0 / 65536) - 0.5) * 100.0;
-        
-        // Print the temperature to console
-        ROS_INFO("Temp is : %f", temperature);
-    }
-    else {      
-        ROS_INFO("Bad Checksum");
+    if(!verify_response(TEMP_SIZE)) {
+        ROS_INFO("Bad checksum");
+        return false;
     }
     
-    // Print the individual byte values from the response
-    ROS_INFO("Byte values are: ");
-    for (int i= 0; i < TEMP_SIZE; i ++) {
-        ROS_INFO(" Byte %d : %x ", i+1, response_buffer[i]);
-    }
-    ROS_INFO("\n");
+    // Compute temperature (first 2 non-header bytes of response)
+    temperature = (( (double)(((int) response_buffer[1] << 8) | (int) response_buffer[2]) * 5.0 / 65536) - 0.5) * 100.0;
+
+    return true;
 }
 
-void imu::get_euler_stable() {  
+bool imu::get_euler_stable(peripherals::orientation &euler_angles) {  
     // Send stable euler angles command
     write(EULER_STAB_CMD, EULER_STAB_SIZE);
 
     // Verify the checksum of the response
-    if(verify_response(EULER_STAB_SIZE)) {      
-        double roll = ((int16_t)((response_buffer[1] << 8) | response_buffer[2])) * 360.0 / 65536.0;
-        double pitch = ((int16_t)((response_buffer[3] << 8) | response_buffer[4])) * 360.0 / 65536.0;
-        double yaw = ((int16_t)((response_buffer[5] << 8) | response_buffer[6])) * 360.0 / 65536.0;
-
-        ROS_INFO("Roll: %f", roll);
-        ROS_INFO("Pitch: %f", pitch);
-        ROS_INFO("Yaw: %f", yaw);
-    }
-    else {      
+    if(!verify_response(EULER_STAB_SIZE)) {      
         ROS_INFO("Bad Checksum");
+        return false;
     }
 
-    // Print the individual byte values from the response
-    ROS_INFO("Byte values are: ");
-    for (int i= 0; i < EULER_STAB_SIZE; i ++) {
-        ROS_INFO(" Byte %d : %x ", i+1, response_buffer[i]);
-    }
-    ROS_INFO("\n");
+    euler_angles.roll = ((int16_t)((response_buffer[1] << 8) | response_buffer[2])) * 360.0 / 65536.0;
+    euler_angles.pitch = ((int16_t)((response_buffer[3] << 8) | response_buffer[4])) * 360.0 / 65536.0;
+    euler_angles.yaw = ((int16_t)((response_buffer[5] << 8) | response_buffer[6])) * 360.0 / 65536.0;
+
+    return true;
 }
 
-void imu::get_mag_accel_gyro_stable() { 
+bool imu::get_mag_accel_gyro_stable
+(
+    geometry_msgs::Vector3 &mag, 
+    geometry_msgs::Vector3 &accel, 
+    geometry_msgs::Vector3 &gyro, 
+    double &time
+)
+{
     // Send the stable vectors command
     write(MAG_ACCEL_GYRO_STAB_CMD, MAG_ACCEL_GYRO_STAB_SIZE);
 
     // Verify the checksum of the response
-    if(verify_response(MAG_ACCEL_GYRO_STAB_SIZE)) {      
-        // Get magnetometer vector (Gauss)
-        double mag_x = ((int16_t)((response_buffer[1] << 8) | response_buffer[2])) * mag_gain_scale / 32768000.0;
-        double mag_y = ((int16_t)((response_buffer[3] << 8) | response_buffer[4])) * mag_gain_scale / 32768000.0;
-        double mag_z = ((int16_t)((response_buffer[5] << 8) | response_buffer[6])) * mag_gain_scale / 32768000.0;
-
-        // Get accelerometer vector (G's)
-        double accel_x = ((int16_t)((response_buffer[7] << 8) | response_buffer[8])) * accel_gain_scale / 32768000.0;
-        double accel_y = ((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
-        double accel_z = ((int16_t)((response_buffer[11] << 8) | response_buffer[12])) * accel_gain_scale / 32768000.0;
-
-        // Get gyroscope vector (rad/sec)
-        double gyro_x = ((int16_t)((response_buffer[13] << 8) | response_buffer[14])) * gyro_gain_scale / 32768000.0;
-        double gyro_y = ((int16_t)((response_buffer[15] << 8) | response_buffer[16])) * gyro_gain_scale / 32768000.0;
-        double gyro_z = ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
-
-        // Get timestamp (ms)
-        double time = ((int16_t)((response_buffer[19] << 8) | response_buffer[20])) * 6.5536;
-
-        ROS_INFO("Magnetometer (Gauss): X:%f, Y:%f, Z:%f", mag_x, mag_y, mag_z);
-        ROS_INFO("Accelerometer (G's): X:%f, Y:%f, Z:%f", accel_x, accel_y, accel_z);
-        ROS_INFO("Gyroscope (rad/sec): X:%f, Y:%f, Z:%f", gyro_x, gyro_y, gyro_z);
-        ROS_INFO("Timestamp (ms): %f", time);
-    }
-    else {      
+    if(!verify_response(MAG_ACCEL_GYRO_STAB_SIZE)) {      
         ROS_INFO("Bad Checksum");
+        return false;
     }
 
-    ROS_INFO("\n");
+    // Get magnetometer vector (Gauss)
+    mag.x = ((int16_t)((response_buffer[1] << 8) | response_buffer[2])) * mag_gain_scale / 32768000.0;
+    mag.y = ((int16_t)((response_buffer[3] << 8) | response_buffer[4])) * mag_gain_scale / 32768000.0;
+    mag.z = ((int16_t)((response_buffer[5] << 8) | response_buffer[6])) * mag_gain_scale / 32768000.0;
+
+    // Get accelerometer vector (G's)
+    accel.x = ((int16_t)((response_buffer[7] << 8) | response_buffer[8])) * accel_gain_scale / 32768000.0;
+    accel.y = ((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
+    accel.z = ((int16_t)((response_buffer[11] << 8) | response_buffer[12])) * accel_gain_scale / 32768000.0;
+
+    // Get gyroscope vector (rad/sec)
+    gyro.x = ((int16_t)((response_buffer[13] << 8) | response_buffer[14])) * gyro_gain_scale / 32768000.0;
+    gyro.y = ((int16_t)((response_buffer[15] << 8) | response_buffer[16])) * gyro_gain_scale / 32768000.0;
+    gyro.z = ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
+
+    // Get timestamp (ms)
+    time = ((uint16_t)((response_buffer[19] << 8) | response_buffer[20])) * 6.5536;
+
+    return true;
 }
 
-void imu::get_mag_accel_gyro() {        
+bool imu::get_mag_accel_gyro
+(
+    geometry_msgs::Vector3 &mag, 
+    geometry_msgs::Vector3 &accel, 
+    geometry_msgs::Vector3 &gyro, 
+    double &time
+) 
+{        
     // Send the command to get instantaneous vectors
     write(MAG_ACCEL_GYRO_CMD, MAG_ACCEL_GYRO_SIZE);
 
     // Verify the checksum of the response
-    if(verify_response(MAG_ACCEL_GYRO_SIZE)) {      
-        // Get magnetometer vector (Gauss)
-        double mag_x = ((int16_t)((response_buffer[1] << 8) | response_buffer[2])) * mag_gain_scale / 32768000.0;
-        double mag_y = ((int16_t)((response_buffer[3] << 8) | response_buffer[4])) * mag_gain_scale / 32768000.0;
-        double mag_z = ((int16_t)((response_buffer[5] << 8) | response_buffer[6])) * mag_gain_scale / 32768000.0;
-
-        // Get accelerometer vector (G's)
-        double accel_x = ((int16_t)((response_buffer[7] << 8) | response_buffer[8])) * accel_gain_scale / 32768000.0;
-        double accel_y = ((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
-        double accel_z = ((int16_t)((response_buffer[11] << 8) | response_buffer[12])) * accel_gain_scale / 32768000.0;
-
-        // Get gyroscope vector (rad/sec)
-        double gyro_x = ((int16_t)((response_buffer[13] << 8) | response_buffer[14])) * gyro_gain_scale / 32768000.0;
-        double gyro_y = ((int16_t)((response_buffer[15] << 8) | response_buffer[16])) * gyro_gain_scale / 32768000.0;
-        double gyro_z = ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
-
-        // Get timestamp (ms)
-        double time = ((int16_t)((response_buffer[19] << 8) | response_buffer[20])) * 6.5536;
-
-        ROS_INFO("Magnetometer (Gauss): X:%f, Y:%f, Z:%f", mag_x, mag_y, mag_z);
-        ROS_INFO("Accelerometer (G's): X:%f, Y:%f, Z:%f", accel_x, accel_y, accel_z);
-        ROS_INFO("Gyroscope (rad/sec): X:%f, Y:%f, Z:%f", gyro_x, gyro_y, gyro_z);
-        ROS_INFO("Timestamp (ms): %f", time);
-    }
-    else {      
+    if(!verify_response(MAG_ACCEL_GYRO_SIZE)) {      
         ROS_INFO("Bad Checksum");
+        return false;
     }
 
-    ROS_INFO("\n");
+    // Get magnetometer vector (Gauss)
+    mag.x = ((int16_t)((response_buffer[1] << 8) | response_buffer[2])) * mag_gain_scale / 32768000.0;
+    mag.y = ((int16_t)((response_buffer[3] << 8) | response_buffer[4])) * mag_gain_scale / 32768000.0;
+    mag.z = ((int16_t)((response_buffer[5] << 8) | response_buffer[6])) * mag_gain_scale / 32768000.0;
+
+    // Get accelerometer vector (G's)
+    accel.x = ((int16_t)((response_buffer[7] << 8) | response_buffer[8])) * accel_gain_scale / 32768000.0;
+    accel.y = ((int16_t)((response_buffer[9] << 8) | response_buffer[10])) * accel_gain_scale / 32768000.0;
+    accel.z = ((int16_t)((response_buffer[11] << 8) | response_buffer[12])) * accel_gain_scale / 32768000.0;
+
+    // Get gyroscope vector (rad/sec)
+    gyro.x = ((int16_t)((response_buffer[13] << 8) | response_buffer[14])) * gyro_gain_scale / 32768000.0;
+    gyro.y = ((int16_t)((response_buffer[15] << 8) | response_buffer[16])) * gyro_gain_scale / 32768000.0;
+    gyro.z = ((int16_t)((response_buffer[17] << 8) | response_buffer[17])) * gyro_gain_scale / 32768000.0;
+
+    // Get timestamp (ms)
+    time = ((uint16_t)((response_buffer[19] << 8) | response_buffer[20])) * 6.5536;
+
+    return true;
 }
 
 int main(int argc, char ** argv)
@@ -255,6 +246,9 @@ int main(int argc, char ** argv)
 
     monitor::GetSerialDevice srv;
     nh.getParam("device_id", srv.request.device_id);
+
+    // Declare publisher
+    ros::Publisher pub = nh.advertise<peripherals::imu>("depth", 10);
 
     /*
     ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
@@ -269,9 +263,48 @@ int main(int argc, char ** argv)
     /* Wait for callbacks */
     //ros::spin();
     imu dev("/dev/ttyS3");
-    ros::Rate r(4);
+    ros::Rate r(1);
     while(ros::ok()) {
-        dev.get_mag_accel_gyro();
+        peripherals::imu msg;
+        bool valid_msg = true;
+
+        // Get the Temperature of the IMU
+        valid_msg = dev.get_temperature(msg.temperature) && valid_msg;
+
+        // Get the Stabilised Euler Angles
+        valid_msg = dev.get_euler_stable(msg.euler_angles) && valid_msg;
+
+        // Get the Stabilised IMU Sensor Vectors
+        valid_msg = dev.get_mag_accel_gyro_stable(msg.stabilised_magnetic_field, 
+                msg.stabilised_acceleration, msg.compensated_angular_rate, msg.stabilised_vectors_timestamp) && valid_msg;
+
+        // Get the Instantaneous IMU Sensor Vectors
+        valid_msg = dev.get_mag_accel_gyro(msg.magnetic_field, msg.acceleration, msg.angular_rate, 
+                msg.instantaneous_vectors_timestamp) && valid_msg;
+
+        if(valid_msg) {   
+            ROS_INFO("Temperature: %f", msg.temperature);
+            ROS_INFO("Euler Angles: P:%f, R:%f, Y:%f", msg.euler_angles.pitch, msg.euler_angles.roll, msg.euler_angles.yaw);
+            ROS_INFO("Stabilised Mag: X:%f, Y:%f, Z:%f", msg.stabilised_magnetic_field.x, msg.stabilised_magnetic_field.y, 
+                    msg.stabilised_magnetic_field.z);
+            ROS_INFO("Stabilised Accel: X:%f, Y:%f, Z:%f", msg.stabilised_acceleration.x, msg.stabilised_acceleration.y, 
+                    msg.stabilised_acceleration.z);
+            ROS_INFO("Compensated Gyro: X:%f, Y:%f, Z:%f", msg.compensated_angular_rate.x, msg.compensated_angular_rate.y, 
+                    msg.compensated_angular_rate.z);
+            ROS_INFO("Stabilised Vector Timestamp: %f", msg.stabilised_vectors_timestamp);
+            ROS_INFO("Mag: X:%f, Y:%f, Z:%f", msg.magnetic_field.x, msg.magnetic_field.y, 
+                    msg.magnetic_field.z);
+            ROS_INFO("Accel: X:%f, Y:%f, Z:%f", msg.acceleration.x, msg.acceleration.y, 
+                    msg.acceleration.z);
+            ROS_INFO("Gyro: X:%f, Y:%f, Z:%f", msg.angular_rate.x, msg.angular_rate.y, 
+                    msg.angular_rate.z);
+            ROS_INFO("Instantaneous Vector Timestamp: %f\n", msg.instantaneous_vectors_timestamp);
+
+            pub.publish(msg);
+        }
+        else {  
+            ROS_INFO("Invalid message.\n");
+        }
         ros::spinOnce();
         r.sleep();
     }
