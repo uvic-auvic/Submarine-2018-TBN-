@@ -248,22 +248,11 @@ int main(int argc, char ** argv)
     nh.getParam("device_id", srv.request.device_id);
 
     // Declare publisher
-    ros::Publisher pub = nh.advertise<peripherals::imu>("depth", 10);
-
-    /*
-    ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
-    if (!client.call(srv)) {
-        ROS_INFO("Couldn't get \"%s\" file descripter. Shutting down", srv.request.device_id.c_str());
-        return 1;
-    }
-    */
-
-    //ROS_INFO("Using imu on fd %s\n", srv.response.device_fd.c_str());
+    ros::Publisher pub = nh.advertise<peripherals::imu>("imu_sensor", 10);
 
     /* Wait for callbacks */
-    //ros::spin();
     imu dev("/dev/ttyS3");
-    ros::Rate r(1);
+    ros::Rate r(10);
     while(ros::ok()) {
         peripherals::imu msg;
         bool valid_msg = true;
@@ -283,6 +272,9 @@ int main(int argc, char ** argv)
                 msg.instantaneous_vectors_timestamp) && valid_msg;
 
         if(valid_msg) {   
+            // Publish message
+            pub.publish(msg);
+
             ROS_INFO("Temperature: %f", msg.temperature);
             ROS_INFO("Euler Angles: P:%f, R:%f, Y:%f", msg.euler_angles.pitch, msg.euler_angles.roll, msg.euler_angles.yaw);
             ROS_INFO("Stabilised Mag: X:%f, Y:%f, Z:%f", msg.stabilised_magnetic_field.x, msg.stabilised_magnetic_field.y, 
@@ -299,8 +291,6 @@ int main(int argc, char ** argv)
             ROS_INFO("Gyro: X:%f, Y:%f, Z:%f", msg.angular_rate.x, msg.angular_rate.y, 
                     msg.angular_rate.z);
             ROS_INFO("Instantaneous Vector Timestamp: %f\n", msg.instantaneous_vectors_timestamp);
-
-            pub.publish(msg);
         }
         else {  
             ROS_INFO("Invalid message.\n");
