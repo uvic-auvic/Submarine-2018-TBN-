@@ -1,16 +1,16 @@
 {
-    "Motor_controller" : {
-        "baud": 9600,
+    "motor_controller" : {
+        "baud" : 9600,
         "ack_message" : "RID\n",
         "ack_response" : "Motor_controller\r\n",
         "timeout": 1000,
         "convert_to_bytes" : false
     },
-
+    
     "imu" : {
-        "baud" : 36000,
+        "baud" : 38400,
         "ack_message" : "241",
-        "ack_response" : "12345",
+        "ack_response" : "2936",
         "timeout": 1000,
         "convert_to_bytes" : true
     }

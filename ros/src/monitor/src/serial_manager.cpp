@@ -25,24 +25,25 @@ device_manager::device_manager(const std::vector<device_property> & properties) 
                 continue;
             }
             
-            serial::Serial connection(port->port, property->baud , property->timeout);
+            serial::Serial connection(port->port, (uint32_t) property->baud , property->timeout);
             
             bool device_found = false;
             if (property->convert_to_bytes) {
                 uint8_t send_data = std::stoi(property->ack_message);
                 connection.write(&send_data, 1);
                 uint8_t * response = new uint8_t[5];
-                connection.read(response, 5);
-                connection.close();
-                int16_t serial_num = (int16_t) (response[1] << 8 ) | (response[2]);
+                connection.read(response, (size_t) 5);
+                uint16_t serial_num = (uint16_t) (static_cast<uint16_t>(response[1]) << 8 ) | (response[2]);
                 int16_t expected_serial = std::stoi(property->ack_response);
-                device_found = expected_serial == serial_num; 
+                device_found = expected_serial == serial_num;
+                delete [] response; 
             } else {
                 connection.write(property->ack_message);
                 std::string response = connection.readline(65536ul, "\n");
-                connection.close();
                 device_found = response == property->ack_response;
             }
+
+            connection.close();
             
             if (device_found) {
                 monitor::SerialDevice dev;
