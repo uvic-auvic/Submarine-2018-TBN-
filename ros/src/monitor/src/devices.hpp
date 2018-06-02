@@ -26,18 +26,20 @@ public:
 
 class device_property {
 public:
-    device_property(string name, string ack_m, string ack_r, int baud, int timeout, bool convert_to_bytes)
+    device_property(string name, string ack_m, string ack_r, int baud, int timeout, bool convert_to_bytes, size_t size_of_response)
      : name(name)
      , ack_message(ack_m)
      , ack_response(ack_r)
      , baud(baud)
      , convert_to_bytes(convert_to_bytes)
-     , timeout(serial::Timeout::simpleTimeout(timeout)) {}
+     , timeout(serial::Timeout::simpleTimeout(timeout))
+     , size_of_response(size_of_response) {}
     std::string name;
     std::string ack_message;
     std::string ack_response;
     int baud;
     bool convert_to_bytes;
+    size_t size_of_response;
     serial::Timeout timeout;
     
 

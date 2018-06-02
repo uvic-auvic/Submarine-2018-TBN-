@@ -29,14 +29,21 @@ device_manager::device_manager(const std::vector<device_property> & properties) 
             
             bool device_found = false;
             if (property->convert_to_bytes) {
+                // Get response size as defined in JSON
                 uint8_t send_data = std::stoi(property->ack_message);
                 connection.write(&send_data, 1);
-                uint8_t * response = new uint8_t[5];
-                connection.read(response, (size_t) 5);
-                uint16_t serial_num = (uint16_t) (static_cast<uint16_t>(response[1]) << 8 ) | (response[2]);
-                int16_t expected_serial = std::stoi(property->ack_response);
-                device_found = expected_serial == serial_num;
-                delete [] response; 
+                uint8_t * response_array = new uint8_t[property->size_of_response];
+                connection.read(response_array, property->size_of_response);
+
+                // put bytes together to get our expected resonse 
+                uint64_t response = 0;
+                for (int i = 0 ; i < property->size_of_response; ++i) {
+                    int shift_by = 8 * (property->size_of_response-i-1);
+                    response |= ((uint64_t) response_array[i]) << shift_by; // Assuming Big endian
+                }
+                uint64_t expected_response = std::stoi(property->ack_response);
+                device_found = expected_response == response;
+                delete [] response_array; 
             } else {
                 connection.write(property->ack_message);
                 std::string response = connection.readline(65536ul, "\n");
@@ -99,18 +106,21 @@ void parse_json(std::vector<device_property> & json_properties, std::string json
         int baud, timeout;
         std::string msg, rsp;
         bool convert;
+        size_t size_of_response = 0; //default to 0
         try {
             baud = it->second.get<int>("baud");
             msg = it->second.get<std::string>("ack_message");
             rsp = it->second.get<std::string>("ack_response");
             timeout = it->second.get<int>("timeout");
             convert = it->second.get<bool>("convert_to_bytes");
+            if (convert) {
+                size_of_response = it->second.get<size_t>("size_of_response");
+            }
         } catch (...) {
-            std::string msg = "Failed to parse " + it->first;
-            throw std::runtime_error(msg);
+            throw std::runtime_error("Failed to parse " + it->first);
         }
         
-        device_property new_dev(it->first, msg, rsp, baud, timeout, convert);
+        device_property new_dev(it->first, msg, rsp, baud, timeout, convert, size_of_response);
         json_properties.push_back(new_dev);
     }
 }

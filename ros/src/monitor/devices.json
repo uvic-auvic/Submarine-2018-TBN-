@@ -12,6 +12,7 @@
         "ack_message" : "241",
         "ack_response" : "2936",
         "timeout": 1000,
-        "convert_to_bytes" : true
+        "convert_to_bytes" : true,
+        "size_of_response" : 5
     }
 }
