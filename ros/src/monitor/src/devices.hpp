@@ -26,23 +26,30 @@ public:
 
 class device_property {
 public:
-    device_property(string name, string ack_m, string ack_r, int baud, int timeout, bool convert_to_bytes, size_t size_of_response)
+    device_property(
+        string name, string ack_m, string ack_r, int baud, int timeout, 
+        bool convert_to_bytes, size_t size_of_message, size_t size_of_response,
+        bool big_endian_message, bool big_endian_response)
      : name(name)
      , ack_message(ack_m)
      , ack_response(ack_r)
      , baud(baud)
      , convert_to_bytes(convert_to_bytes)
      , timeout(serial::Timeout::simpleTimeout(timeout))
-     , size_of_response(size_of_response) {}
+     , size_of_response(size_of_response)
+     , size_of_message(size_of_message)
+     , big_endian_message(big_endian_message)
+     , big_endian_response(big_endian_response) {}
     std::string name;
     std::string ack_message;
     std::string ack_response;
     int baud;
     bool convert_to_bytes;
+    size_t size_of_message;
     size_t size_of_response;
     serial::Timeout timeout;
-    
-
+    bool big_endian_message;
+    bool big_endian_response;
 };
 
 class device_manager {

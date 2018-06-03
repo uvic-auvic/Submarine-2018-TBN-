@@ -9,10 +9,14 @@
     
     "imu" : {
         "baud" : 38400,
-        "ack_message" : "241",
-        "ack_response" : "2936",
+        "ack_message" : "0xF1",
+        "ack_response" : "0xF10B7800",
         "timeout": 1000,
         "convert_to_bytes" : true,
-        "size_of_response" : 5
+        "size_of_message" : 1,
+        "size_of_response" : 5,
+        "big_endian_message": true,
+        "big_endian_response" : false
+        
     }
 }
