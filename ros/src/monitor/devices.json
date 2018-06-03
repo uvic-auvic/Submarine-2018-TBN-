@@ -10,7 +10,7 @@
     "imu" : {
         "baud" : 38400,
         "ack_message" : "0xF1",
-        "ack_response" : "0xF10B7800",
+        "ack_response" : "0xF10B780C69",
         "timeout": 1000,
         "convert_to_bytes" : true,
         "size_of_message" : 1,
