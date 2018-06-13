@@ -1,0 +1,19 @@
+<launch>        
+        <!-- Vision Node -->
+
+        <arg name="node_name" default=""/>
+        <arg name="topic_name" default=""/>
+        <arg name="fd" default=""/>
+        <arg name="record" default="false"/>
+        <arg name="save_location"  default="~/Documents/Ros_Bags/"/>
+
+        <node name="$(arg node_name)" pkg="vision" type="sender" required="true">
+          <param name="topic_name" value="$(arg topic_name)"/>
+          <param name="fd" value="$(arg fd)"/>
+        </node>
+
+        <group if="$(arg record)">
+          <node pkg="rosbag" type="record" name="$(arg node_name)_recording" args="record $(arg topic_name) -o $(arg save_location)"/> 
+        </group>  
+
+</launch>
