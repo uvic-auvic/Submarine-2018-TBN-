@@ -17,7 +17,6 @@ private:
     bool A_pressed;
     bool S_pressed;
     bool D_pressed;
-
 };
 
 rov_mapper::rov_mapper() 
@@ -29,20 +28,67 @@ rov_mapper::rov_mapper()
         D_pressed(false) {}
 
 void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
-    bool fire = msg->buttons[0];
-    bool up = msg->buttons[1];
-    bool down = msg->buttons[2];
-    int16_t y_axis = msg->axes[0];
-    int16_t z_axis = msg->axes[1];
-    int16_t x_axis = 25;
     
+    bool fire = msg->buttons[0];
+    bool stop_pressed = msg->buttons[3];
+    bool up_pressed = msg->buttons[1];
+    bool down_pressed = msg->buttons[2];
+
+    // Set default values
+    navigation::nav nav_msg;
+    nav_msg.direction.x = 0; // forwards or backwards;
+    nav_msg.direction.y = 0;// left or right;
+    nav_msg.direction.z = 0;// up or down;
+    nav_msg.rotation.roll = 0;
+    nav_msg.rotation.pitch = 0;
+    nav_msg.rotation.yaw = 0;
+
+    // check if we should stop everything
+    // handy workaround to the keyboard-browser issue
+    if (stop_pressed) {
+        nav_pub.publish(nav_msg);
+        return;
+    }
+
+    // Check if we should go up or not
+    if (up_pressed) {
+        nav_msg.direction.z = 10;
+        nav_pub.publish(nav_msg);
+        return;
+    }
+    
+    if (down_pressed) {
+        nav_msg.direction.z = -10;
+        nav_pub.publish(nav_msg);
+        return;
+    }
+
     if (W_pressed) {
-        ROS_INFO("Forwards X: %d Y: %d Z: %d", x_axis, y_axis, z_axis);
-        return; //if both W and S are pressed, prefer W
+        nav_msg.direction.x = 10.0;
+        nav_msg.direction.y = msg->axes[0];
+        nav_msg.direction.z = msg->axes[1];
+        nav_pub.publish(nav_msg);
+        return;
     } 
     
     if (S_pressed) {
-        ROS_INFO("Backwards X: %d Y: %d Z: %d", x_axis, y_axis, z_axis);
+        nav_msg.direction.x = -10.0;
+        nav_msg.direction.y = -msg->axes[0];
+        nav_msg.direction.z = -msg->axes[1];
+        nav_pub.publish(nav_msg);
+        return;
+    }
+
+    if (A_pressed) {
+        nav_msg.rotation.roll = 10;
+        nav_pub.publish(nav_msg);
+        return;
+    }
+
+    if (S_pressed) {
+        nav_msg.rotation.roll = -10;
+        nav_pub.publish(nav_msg);
+        return;
     }
 
 }
@@ -54,14 +100,13 @@ void rov_mapper::recieve_keyboard(const navigation::keyboard::ConstPtr& msg) {
     D_pressed = msg->D_pressed;
 }
 
-
 int main(int argc, char ** argv) {
     ros::init(argc, argv, "rov");
     ros::NodeHandle nh("~");
     
     rov_mapper controls;
-    ros::Subscriber joy = nh.subscribe<navigation::joystick>("/nav/joystick", 20, &rov_mapper::recieve_joystick, &controls);
-    ros::Subscriber key = nh.subscribe<navigation::keyboard>("/nav/keyboard", 20, &rov_mapper::recieve_keyboard, &controls);
+    ros::Subscriber joy = nh.subscribe<navigation::joystick>("/nav/joystick", 1, &rov_mapper::recieve_joystick, &controls);
+    ros::Subscriber key = nh.subscribe<navigation::keyboard>("/nav/keyboard", 1, &rov_mapper::recieve_keyboard, &controls);
     ros::spin();
     return 0;
 
