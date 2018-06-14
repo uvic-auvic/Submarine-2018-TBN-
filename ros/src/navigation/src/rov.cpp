@@ -1,6 +1,6 @@
-#include <ros/ros.h>
 #include <sstream>
 #include <string>
+#include <ros/ros.h>
 #include "navigation/joystick.h"
 #include "navigation/keyboard.h"
 #include "navigation/nav.h"
@@ -8,8 +8,8 @@
 class rov_mapper {
 public:
     rov_mapper(); 
-    void recieve_joystick(const navigation::joystick::ConstPtr& msg);
-    void recieve_keyboard(const navigation::keyboard::ConstPtr& msg);
+    void recieve_joystick(const navigation::joystick::ConstPtr &msg);
+    void recieve_keyboard(const navigation::keyboard::ConstPtr &msg);
 private:
     ros::NodeHandle nh;
     ros::Publisher nav_pub;
