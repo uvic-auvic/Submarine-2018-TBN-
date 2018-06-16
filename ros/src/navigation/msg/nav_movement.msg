@@ -1,0 +1,5 @@
+geometry_msgs/Vector3 velocity_desired
+geometry_msgs/Vector3 velocity_actual
+geometry_msgs/Vector3 angular_rate_desired
+geometry_msgs/Vector3 angular_rate_actual
+peripherals/orientation euler_angles
