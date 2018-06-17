@@ -126,6 +126,9 @@ int main(int argc, char ** argv)
     monitor::GetSerialDevice srv;
     nh.getParam("device_id", srv.request.device_id);
 
+    int loop_rate;
+    nh.getParam("loop_rate", loop_rate);
+
     ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if (!client.call(srv)) {
         ROS_INFO("Couldn't get \"%s\" file descripter. Shutting down", srv.request.device_id.c_str());
@@ -137,7 +140,7 @@ int main(int argc, char ** argv)
     ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 10);
 
     // Main loop
-    ros::Rate r(1);
+    ros::Rate r(loop_rate);
     power_board device(srv.response.device_fd);
     while(ros::ok()) {
         // Publish message to topic 
