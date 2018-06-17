@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
    rov.msg
    joystick.msg
    keyboard.msg
-   nav_movement.msg
  )
 
 
@@ -25,8 +24,6 @@ find_package(catkin REQUIRED COMPONENTS
  generate_messages(
    DEPENDENCIES
    std_msgs
-   geometry_msgs
-   peripherals
  )
 
 catkin_package(
@@ -43,8 +40,4 @@ include_directories(
 add_executable(rov src/rov.cpp)
 target_link_libraries(rov ${catkin_LIBRARIES})
 add_dependencies(rov navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
-
-add_executable(nav_req_handler src/nav_req_handler.cpp)
-target_link_libraries(nav_req_handler ${catkin_LIBRARIES})
-add_dependencies(nav_req_handler navigation_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
