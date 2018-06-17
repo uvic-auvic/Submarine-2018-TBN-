@@ -59,10 +59,10 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with current data
     if(currents.length() >= 12) {       
-        msg.current_battery_1 = (currents[0] << 16) | (currents[1] << 8) | (currents[2]);
-        msg.current_battery_2 = (currents[3] << 16) | (currents[4] << 8) | (currents[5]);
-        msg.current_motors = (currents[6] << 16) | (currents[7] << 8) | (currents[8]);
-        msg.current_system = (currents[9] << 16) | (currents[10] << 8) | (currents[11]);
+        msg.current_battery_1 = (currents[2] << 16) | (currents[1] << 8) | (currents[0]);
+        msg.current_battery_2 = (currents[5] << 16) | (currents[4] << 8) | (currents[3]);
+        msg.current_motors = (currents[8] << 16) | (currents[7] << 8) | (currents[6]);
+        msg.current_system = (currents[11] << 16) | (currents[10] << 8) | (currents[9]);
     }
     else {      
         ROS_INFO("Current data is invalid. Data:%s\n", currents.c_str());
@@ -70,8 +70,8 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with voltage data
     if(voltages.length() >= 4) {        
-        msg.voltage_battery_1 = (voltages[0] << 8) | (voltages[1]);
-        msg.voltage_battery_2 = (voltages[2] << 8) | (voltages[3]);
+        msg.voltage_battery_1 = (voltages[1] << 8) | (voltages[0]);
+        msg.voltage_battery_2 = (voltages[3] << 8) | (voltages[2]);
     }
     else {      
         ROS_INFO("Voltage data is invalid. Data:%s\n", voltages.c_str());
@@ -79,7 +79,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with temperature data
     if(temperature.length() >= 2) {     
-        msg.temperature = (temperature[0] << 8) | (temperature[1]);
+        msg.temperature = (temperature[1] << 8) | (temperature[0]);
     }
     else {      
         ROS_INFO("Temperature data is invalid. Data:%s\n", temperature.c_str());
@@ -87,7 +87,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with humidity data
     if(humidity.length() >= 2) {     
-        msg.humidity = (humidity[0] << 8) | (humidity[1]);
+        msg.humidity = (humidity[1] << 8) | (humidity[0]);
     }
     else {      
         ROS_INFO("Humidity data is invalid. Data:%s\n", humidity.c_str());
@@ -95,7 +95,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with water sensor data
     if(water.length() >= 2) {     
-        msg.water_sensor = (water[0] << 8) | (water[1]);
+        msg.water_sensor = (water[1] << 8) | (water[0]);
     }
     else {      
         ROS_INFO("Water data is invalid. Data:%s\n", water.c_str());
@@ -103,7 +103,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with main housing pressure data
     if(pressure_internal.length() >= 2) {     
-        msg.internal_pressure = (pressure_internal[0] << 8) | (pressure_internal[1]);
+        msg.internal_pressure = (pressure_internal[1] << 8) | (pressure_internal[0]);
     }
     else {      
         ROS_INFO("Internal housing pressure data is invalid. Data:%s\n", pressure_internal.c_str());
@@ -111,7 +111,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with external water pressure data
     if(pressure_external.length() >= 2) {     
-        msg.external_pressure = (pressure_external[0] << 8) | (pressure_external[1]);
+        msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
     }
     else {      
         ROS_INFO("External water pressure data is invalid. Data:%s\n", pressure_external.c_str());
