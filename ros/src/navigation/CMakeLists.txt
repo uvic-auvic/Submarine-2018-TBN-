@@ -42,8 +42,9 @@ catkin_package(
 
 
 include_directories(
-# include
+  include 
   ${catkin_INCLUDE_DIRS}
+  
 )
 
 add_executable(rov src/rov.cpp)
@@ -53,5 +54,9 @@ add_dependencies(rov navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS}
 add_executable(thrustmap src/thrustmap.cpp)
 target_link_libraries(thrustmap ${catkin_LIBRARIES})
 add_dependencies(thrustmap navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+
+add_executable(depth_control src/depth_control.cpp src/pid.cpp)
+target_link_libraries(depth_control ${catkin_LIBRARIES})
+add_dependencies(depth_control navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
 

@@ -6,6 +6,7 @@
 
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/imu.h"
+#include "geometry_msgs/Vector3.h"
 
 using rosserv = ros::ServiceServer;
 using imu_msg = peripherals::imu;
