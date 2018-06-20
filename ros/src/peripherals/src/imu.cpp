@@ -318,9 +318,10 @@ int main(int argc, char ** argv)
     nh.getParam("updates_per_publish", updates_per_publish);
 
     // Get the port the device is on
-    ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("serial_manager/GetDevicePort");
+    ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if(!client.call(srv)) {     
-        ROS_INFO("Couldn't get \"%s\" file descriptor. Shutting down", srv.request.device_id.c_str());
+        ROS_ERROR("Couldn't get \"%s\" file descriptor. Shutting down", srv.request.device_id.c_str());
+        ROS_INFO("Server returned port %s", srv.response.device_fd.c_str());
         return 1;
     }
 
@@ -365,6 +366,7 @@ int main(int argc, char ** argv)
                 pub.publish(msg);
 
                 ROS_INFO("Temperature: %f", msg.temperature);
+                ROS_INFO("Velocity: X:%f, Y:%f, Z:%f", msg.velocity.x, msg.velocity.y, msg.velocity.z);
                 ROS_INFO("Euler Angles: P:%f, R:%f, Y:%f", msg.euler_angles.pitch, msg.euler_angles.roll, msg.euler_angles.yaw);
                 ROS_INFO("Stabilised Mag: X:%f, Y:%f, Z:%f", msg.stabilised_magnetic_field.x, msg.stabilised_magnetic_field.y, 
                         msg.stabilised_magnetic_field.z);

@@ -1,7 +1,7 @@
 <launch>
     <arg name="device_id" default="imu"/>
     <arg name="publish_rate" default="1"/>
-    <arg name="updates_per_publish" default="1000"/>
+    <arg name="updates_per_publish" default="100"/>
 
     <node name="imu" pkg="peripherals" type="imu" respawn="true" respawn_delay="1" >
         <param name="device_id" value="$(arg device_id)"/>
