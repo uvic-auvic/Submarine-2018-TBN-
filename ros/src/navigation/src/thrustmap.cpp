@@ -3,6 +3,22 @@
 #include "peripherals/motor.h"
 #include "peripherals/motors.h"
 
+double Length_Thruster_to_Origin[8][3] = 
+{
+    {-3.606, -2.913, -0.3},
+    {-3.606, 19.413, -0.3},
+    {-30.394, -2.913, -0.3},
+    {-30.394, 19.413, -0.3},
+    {3.063, 8.25, -1.0},
+    {-37.063, 8.25, -1.0},
+    {-15.391, -2.913, 3.7},
+    {-15.391, 19.413, 3.7}
+};
+
+double Length_to_Center_of_Gravity = {-18.305, 8.217, 1.796};
+
+double Length_Thruster_to_Center_of_Gravity[8][3];
+
 class thrust_controller
 {
 public:
