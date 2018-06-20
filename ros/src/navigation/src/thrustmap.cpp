@@ -3,21 +3,41 @@
 #include "peripherals/motor.h"
 #include "peripherals/motors.h"
 
-double Length_Thruster_to_Origin[8][3] = 
-{
-    {-3.606, -2.913, -0.3},
-    {-3.606, 19.413, -0.3},
-    {-30.394, -2.913, -0.3},
-    {-30.394, 19.413, -0.3},
-    {3.063, 8.25, -1.0},
-    {-37.063, 8.25, -1.0},
-    {-15.391, -2.913, 3.7},
-    {-15.391, 19.413, 3.7}
-};
+#define NUMBER_OF_THRUSTERS     (8)
 
-double Length_to_Center_of_Gravity = {-18.305, 8.217, 1.796};
+double E[8][6];
 
-double Length_Thruster_to_Center_of_Gravity[8][3];
+//We calculate this dynamically so we can use different COGs for submarine changes
+void calculate_E(){
+    //Origin to Thruster vector
+    const double Origin_to_Thruster[NUMBER_OF_THRUSTERS][3] = 
+    {
+        {-3.606, -2.913, -0.3},
+        {-3.606, 19.413, -0.3},
+        {-30.394, -2.913, -0.3},
+        {-30.394, 19.413, -0.3},
+        {3.063, 8.25, -1.0},
+        {-37.063, 8.25, -1.0},
+        {-15.391, -2.913, 3.7},
+        {-15.391, 19.413, 3.7}
+    };
+
+    //Origin to Center of Gravity
+    const double Origin_to_COG[3] = {-18.305, 8.217, 1.796};
+
+    //Thruster to Center of Gravity
+    double Thruster_to_COG[8][3];
+
+    //T is for each thruster
+    for(int T = 0; T < NUMBER_OF_THRUSTERS; T++){
+        //D is for each dimension
+        for(int D = 0; D < 3; D++){
+            Thruster_to_COG[T][D] = Origin_to_Thruster[T][D] - Origin_to_COG[D];
+        }
+    }
+
+
+}
 
 class thrust_controller
 {
