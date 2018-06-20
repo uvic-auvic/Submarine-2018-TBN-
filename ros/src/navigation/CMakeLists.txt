@@ -51,11 +51,6 @@ add_executable(rov src/rov.cpp)
 target_link_libraries(rov ${catkin_LIBRARIES})
 add_dependencies(rov navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
-<<<<<<< HEAD
-=======
 add_executable(thrustmap src/thrustmap.cpp)
 target_link_libraries(thrustmap ${catkin_LIBRARIES})
 add_dependencies(thrustmap navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
-
-
->>>>>>> d12698eed1c60d27f81e7d568b060fc25304952f
