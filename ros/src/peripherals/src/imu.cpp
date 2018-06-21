@@ -289,7 +289,7 @@ void imu::update_velocity()
         this_time = timestamp;
     }
 
-    // Compute the velocity by integrating the acceleration
+    // Compute the velocity by integrating the acceleration using trapezoid method of integration
     velocity.x = velocity.x + 9.8 * 0.5 * (accel_true.x - last_accel.x) * (this_time - last_timestamp) / 1000.0;
     velocity.y = velocity.y + 9.8 * 0.5 * (accel_true.y - last_accel.y) * (this_time - last_timestamp) / 1000.0;
     velocity.z = velocity.z + 9.8 * 0.5 * (accel_true.z - last_accel.z) * (this_time - last_timestamp) / 1000.0;
@@ -327,7 +327,6 @@ int main(int argc, char ** argv)
     ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if(!client.call(srv)) {     
         ROS_ERROR("Couldn't get \"%s\" file descriptor. Shutting down", srv.request.device_id.c_str());
-        ROS_INFO("Server returned port %s", srv.response.device_fd.c_str());
         return 1;
     }
 
@@ -390,7 +389,7 @@ int main(int argc, char ** argv)
                 ROS_INFO("Instantaneous Vector Timestamp: %f\n", msg.instantaneous_vectors_timestamp);
             }
             else {  
-                ROS_INFO("Invalid message.\n");
+                ROS_ERROR("Invalid message.\n");
             }
         }
         ros::spinOnce();
