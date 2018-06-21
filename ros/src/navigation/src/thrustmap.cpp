@@ -5,6 +5,14 @@
 
 #define NUMBER_OF_THRUSTERS     (8)
 
+#define MAX_FORWARD_RPM         (3000.0)
+#define RPM_FORWARD_SQ_COEFF    (0.00000389750967963493)
+#define RPM_SCALE_FORWARD       (MAX_FORWARD_RPM / sqrt(1.0 / RPM_FORWARD_SQ_COEFF))
+
+#define MAX_REVERSE_RPM         (2500.0)
+#define RPM_REVERSE_SQ_COEFF    (0.00000396914500683942)
+#define RPM_SCALE_REVERSE       (MAX_REVERSE_RPM / sqrt(1.0 / RPM_REVERSE_SQ_COEFF))
+
 #define MAX_FORWARD_COMMAND     (40) //37 original
 #define MIN_FORWARD_COMMAND     (10)
 #define MAX_REVERSE_COMMAND     (30) //28 original
@@ -25,7 +33,7 @@ class thrust_controller
 public:
     thrust_controller(std::string node_name);
     void generate_thrust_val(const navigation::nav::ConstPtr &msg);
-    void do_thrust_matrix(float tau[6], float thrust_value[8]);
+    void do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thrust_value[NUMBER_OF_THRUSTERS]);
 private:
     ros::NodeHandle nh;
     ros::ServiceClient motor_forward;
@@ -72,7 +80,7 @@ void thrust_controller::do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thru
 }
 
 int8_t thrust_controller::thrust_to_command(float thrust){
-    //command use to max at 300 now maxes at 100. both cover same range
+    //command use to max at 300 now maxes at 100. both cover same range the command = command * 3
 
     //forward: rpm = 21.74167 (command) - 43.47222
     //forward: thrust = (x^2) * 0.00000389750967963493  x is rpm, thrust is in newtons
@@ -82,8 +90,10 @@ int8_t thrust_controller::thrust_to_command(float thrust){
 
     int command = 0;
     if(thrust > 0){
-        unsigned int rpm = sqrt(thrust / 0.00000389750967963493);
-        command = (int)((rpm + 43.47222) / 21.74167);
+        
+        unsigned int rpm = sqrt(thrust / RPM_FORWARD_SQ_COEFF);
+        rpm = RPM_SCALE_FORWARD * rpm;
+        command = (int)((rpm + 43.47222) / 65.22501);
 
         if(command > MAX_FORWARD_COMMAND){
             command = MAX_FORWARD_COMMAND;
@@ -91,8 +101,9 @@ int8_t thrust_controller::thrust_to_command(float thrust){
             command = 0;
         }
     }else{
-        unsigned int rpm = sqrt(thrust / 0.00000396914500683942);
-        command = (int)((rpm + 225.50476) / 31.84857);
+        unsigned int rpm = sqrt(thrust / RPM_REVERSE_SQ_COEFF);
+        rpm = rpm * RPM_SCALE_REVERSE;
+        command = (int)((rpm + 225.50476) / 95.54571);
         
         if(command > MAX_REVERSE_COMMAND){
             command = MAX_REVERSE_COMMAND;
@@ -135,7 +146,7 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     for(int i = 0; i < NUMBER_OF_THRUSTERS; i++){
         int8_t speed = this->thrust_to_command(thruster_vals[i]);
         srv.request.arguments.push_back(speed);
-        ROS_INFO("T%d: Speed: %d", i, speed);
+        ROS_ERROR("T%d: Speed: %d", i, speed);
     }
 
     this->motor_set_all.call(srv.request, srv.response);
