@@ -5,13 +5,20 @@
 
 #define NUMBER_OF_THRUSTERS     (8)
 
-#define MAX_FORWARD_COMMAND     (110)
-#define MIN_FORWARD_COMMAND     (30)
-#define MAX_REVERSE_COMMAND     (85)
-#define MIN_REVERSE_COMMAND     (30)
+#define MAX_FORWARD_COMMAND     (40) //37 original
+#define MIN_FORWARD_COMMAND     (10)
+#define MAX_REVERSE_COMMAND     (30) //28 original
+#define MIN_REVERSE_COMMAND     (10)
 
 #define E_MATRIX_ROWS           (8)
 #define E_MATRIX_COLUMNS        (6)
+
+/*
+using MotorReq = peripherals::motor::Request;
+using MotorRes = peripherals::motor::Response;
+using MotorsReq = peripherals::motors::Request;
+using MotorsRes = peripherals::motors::Response;
+*/
 
 class thrust_controller
 {
@@ -27,8 +34,21 @@ private:
     ros::ServiceClient motor_stop;
     ros::ServiceClient motors_stop;
 
-    int thrust_to_command(float thrust);
+    int8_t thrust_to_command(float thrust);
     
+    /*
+    Top looking down view:
+    For calculating system E only
+
+          Front
+            5
+        1       2
+        7       8
+        3       4
+            6
+    */
+
+    //motor order = 1z, 2z, 3z, 4z, 5y, 6y, 7x, 8x
     const double E_inverse[E_MATRIX_ROWS][E_MATRIX_COLUMNS] = {
         {0.0355383007316710, 0.0626175759204514, 0.226381127185469, -0.0223954134193317, -0.0186650739136927, -1.52872506320456e-17},
         {0.0355383007316709, -0.0626175759204520, 0.224903029899793, 0.0223954134193317, -0.0186650739136927, -1.61546123700340e-17},
@@ -51,7 +71,9 @@ void thrust_controller::do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thru
     }
 }
 
-int thrust_controller::thrust_to_command(float thrust){
+int8_t thrust_controller::thrust_to_command(float thrust){
+    //command use to max at 300 now maxes at 100. both cover same range
+
     //forward: rpm = 21.74167 (command) - 43.47222
     //forward: thrust = (x^2) * 0.00000389750967963493  x is rpm, thrust is in newtons
 
@@ -84,12 +106,12 @@ int thrust_controller::thrust_to_command(float thrust){
 
 thrust_controller::thrust_controller(std::string node_name) :
     nh(ros::NodeHandle("~")),
-    motor_forward(nh.serviceClient<peripherals::motor>(node_name + "/setMotorForward")),
-    motor_reverse(nh.serviceClient<peripherals::motor>(node_name + "/setMotorReverse")),
-    motor_set_all(nh.serviceClient<peripherals::motor>(node_name + "/setAllMotors")),
-    motor_stop(nh.serviceClient<peripherals::motor>(node_name + "/stopMotors")),
-    motors_stop(nh.serviceClient<peripherals::motor>(node_name + "/stopAllMotors"))
-    { }
+    motor_forward(nh.serviceClient<peripherals::motor>("/" + node_name + "/setMotorForward")),
+    motor_reverse(nh.serviceClient<peripherals::motor>("/" + node_name + "/setMotorReverse")),
+    motor_set_all(nh.serviceClient<peripherals::motors>("/" + node_name + "/setAllMotors")),
+    motor_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopMotors")),
+    motors_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopAllMotors"))
+    {}
 
 void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg)
 {
@@ -108,9 +130,15 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     float thruster_vals[NUMBER_OF_THRUSTERS] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);
 
+    peripherals::motors srv;
+
     for(int i = 0; i < NUMBER_OF_THRUSTERS; i++){
-        thruster_vals[i] = this->thrust_to_command(thruster_vals[i]);
+        int8_t speed = this->thrust_to_command(thruster_vals[i]);
+        srv.request.arguments.push_back(speed);
+        ROS_INFO("T%d: Speed: %d", i, speed);
     }
+
+    this->motor_set_all.call(srv.request, srv.response);
 }
 
 int main(int argc, char **argv)
