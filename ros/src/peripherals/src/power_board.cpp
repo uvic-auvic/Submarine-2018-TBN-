@@ -6,6 +6,14 @@
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/powerboard.h"
 
+#define RESPONSE_SIZE_CRA (14)
+#define RESPONSE_SIZE_VTA (6)
+#define RESPONSE_SIZE_TMP (4)
+#define RESPONSE_SIZE_HUM (4)
+#define RESPONSE_SIZE_WTR (4)
+#define RESPONSE_SIZE_PIN (4)
+#define RESPONSE_SIZE_PEX (4)
+
 using rosserv = ros::ServiceServer;
 using powerboardInfo = peripherals::powerboard;
 
@@ -17,6 +25,7 @@ public:
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
+    std::size_t write(const std::string & out, uint8_t* in, std::size_t read_len, std::string eol = "\n");
 };
 
 power_board::power_board(const std::string & port, int baud_rate, int timeout) {
@@ -47,74 +56,91 @@ std::string power_board::write(const std::string & out, bool ignore_response, st
     return connection->readline(65536ul, eol);
 }
 
+std::size_t power_board::write(const std::string & out, uint8_t* in, std::size_t read_len, std::string eol)
+{
+    // Flush the output, then the input (order matters, to flush any unwanted responses)
+    connection->flushOutput();
+    connection->flushInput();
+
+    // Send command 
+    connection->write(out + eol);
+    ROS_INFO("%s", out.c_str());
+
+    // Read specified data length
+    return connection->read(in, read_len);
+}
+
 void power_board::get_powerboard_data(powerboardInfo &msg) {
     // Get data from power board
-    std::string currents = this->write("CRA", false);
-    std::string voltages = this->write("VTA", false);
-    std::string temperature = this->write("TMP", false);
-    std::string humidity = this->write("HUM", false);
-    std::string water = this->write("WTR", false);
-    std::string pressure_internal = this->write("PIN", false);
-    std::string pressure_external = this->write("PEX", false);
+    uint8_t* currents = new uint8_t[RESPONSE_SIZE_CRA];
+    uint8_t* voltages = new uint8_t[RESPONSE_SIZE_VTA];
+    uint8_t* temperature = new uint8_t[RESPONSE_SIZE_TMP];
+    uint8_t* humidity = new uint8_t[RESPONSE_SIZE_HUM];
+    uint8_t* water = new uint8_t[RESPONSE_SIZE_WTR];
+    uint8_t* pressure_internal = new uint8_t[RESPONSE_SIZE_PIN];
+    uint8_t* pressure_external = new uint8_t[RESPONSE_SIZE_PEX];
 
-    // Populate message with current data
-    if(currents.length() >= 12) {       
+    // Populate the message with current data
+    std::size_t bytes = 0;
+    if((bytes = this->write("CRA", currents, RESPONSE_SIZE_CRA)) == RESPONSE_SIZE_CRA) {       
         msg.current_battery_1 = (currents[2] << 16) | (currents[1] << 8) | (currents[0]);
         msg.current_battery_2 = (currents[5] << 16) | (currents[4] << 8) | (currents[3]);
         msg.current_motors = (currents[8] << 16) | (currents[7] << 8) | (currents[6]);
         msg.current_system = (currents[11] << 16) | (currents[10] << 8) | (currents[9]);
     }
     else {      
-        ROS_INFO("Current data is invalid. Data:%s\n", currents.c_str());
+        ROS_ERROR("Current data is invalid. Expected %d bytes, received %lu bytes.", RESPONSE_SIZE_CRA, bytes);
     }
 
     // Populate message with voltage data
-    if(voltages.length() >= 4) {        
+    if(this->write("VTA", voltages, RESPONSE_SIZE_VTA) == RESPONSE_SIZE_VTA) {        
         msg.voltage_battery_1 = (voltages[1] << 8) | (voltages[0]);
         msg.voltage_battery_2 = (voltages[3] << 8) | (voltages[2]);
     }
     else {      
-        ROS_INFO("Voltage data is invalid. Data:%s\n", voltages.c_str());
+        ROS_ERROR("Voltage data is invalid.");
     }
 
     // Populate message with temperature data
-    if(temperature.length() >= 2) {     
-        msg.temperature = (temperature[1] << 8) | (temperature[0]);
+    if(this->write("TMP", temperature, RESPONSE_SIZE_TMP) == RESPONSE_SIZE_TMP) {     
+        // Convert to degrees C
+        msg.temperature = ((double)((temperature[1] << 8) | (temperature[0])) - 273.15) / 100.0;
     }
     else {      
-        ROS_INFO("Temperature data is invalid. Data:%s\n", temperature.c_str());
+        ROS_ERROR("Temperature data is invalid.");
     }
 
     // Populate message with humidity data
-    if(humidity.length() >= 2) {     
+    if(this->write("HUM", humidity, RESPONSE_SIZE_HUM) == RESPONSE_SIZE_HUM) {     
         msg.humidity = (humidity[1] << 8) | (humidity[0]);
     }
     else {      
-        ROS_INFO("Humidity data is invalid. Data:%s\n", humidity.c_str());
+        ROS_ERROR("Humidity data is invalid.");
     }
 
     // Populate message with water sensor data
-    if(water.length() >= 2) {     
+    if(this->write("WTR", water, RESPONSE_SIZE_WTR) == RESPONSE_SIZE_WTR) {     
         msg.water_sensor = (water[1] << 8) | (water[0]);
     }
     else {      
-        ROS_INFO("Water data is invalid. Data:%s\n", water.c_str());
+        ROS_ERROR("Water data is invalid.");
     }
 
     // Populate message with main housing pressure data
-    if(pressure_internal.length() >= 2) {     
-        msg.internal_pressure = (pressure_internal[1] << 8) | (pressure_internal[0]);
+    if((bytes = this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN)) == RESPONSE_SIZE_PIN) {     
+        // Convert to PSI
+        msg.internal_pressure = (double)((pressure_internal[1] << 8) | (pressure_internal[0])) * 0.0001450377;
     }
     else {      
-        ROS_INFO("Internal housing pressure data is invalid. Data:%s\n", pressure_internal.c_str());
+        ROS_ERROR("Internal housing pressure data is invalid. Expected %d bytes, received %lu bytes.", RESPONSE_SIZE_PIN, bytes); 
     }
 
     // Populate message with external water pressure data
-    if(pressure_external.length() >= 2) {     
-        msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
+    if(this->write("PEX", pressure_external, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) {     
+        msg.external_pressure = (double)((pressure_external[1] << 8) | (pressure_external[0])) * 10.0E-2;
     }
     else {      
-        ROS_INFO("External water pressure data is invalid. Data:%s\n", pressure_external.c_str());
+        ROS_ERROR("External water pressure data is invalid."); 
     }
 } 
 
@@ -137,7 +163,7 @@ int main(int argc, char ** argv)
 
     ROS_INFO("Using Power Board on fd %s\n", srv.response.device_fd.c_str());
 
-    ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 10);
+    ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 100);
 
     // Main loop
     ros::Rate r(loop_rate);

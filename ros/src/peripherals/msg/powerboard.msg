@@ -2,10 +2,10 @@ uint32 current_battery_1
 uint32 current_battery_2
 uint32 current_motors
 uint32 current_system
-uint16 voltage_battery_1
-uint16 voltage_battery_2
-uint16 temperature
+uint32 voltage_battery_1
+uint32 voltage_battery_2
+float64 temperature
 uint16 humidity
 uint16 water_sensor
-uint16 internal_pressure
-uint16 external_pressure
+float64 internal_pressure
+float64 external_pressure
