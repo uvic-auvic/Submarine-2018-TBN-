@@ -36,7 +36,7 @@ device_manager::device_manager(const std::vector<device_property> & properties) 
             bool device_found = false;
             if (property->convert_to_bytes) {
                 // Send initial message as defined in JSON
-                uint64_t ack_message = std::stoul(property->ack_message, nullptr, 16);
+                uint64_t ack_message = std::stoul(property->ack_message, 0, 16);
                 uint8_t * send_data = new uint8_t[property->size_of_message];
                 for (int i = 0; i < property->size_of_message; ++i) {
                     int j = i;
@@ -64,8 +64,6 @@ device_manager::device_manager(const std::vector<device_property> & properties) 
                 // Compare expected with actual reponse
                 uint64_t expected_response = std::stoul(property->ack_response, 0 ,16);
                 device_found = expected_response == response;
-                ROS_INFO("Port %s gave response 0x%lx to 0x%lx when expected response was 0x%lx", 
-                    port->port.c_str(), response, ack_message, expected_response);
                 delete [] response_array;
                 delete [] send_data; 
             } else {
@@ -122,7 +120,6 @@ bool device_manager::get_all_devices(GetSerialsReq &req, GetSerialsRes &res) {
 
 void parse_json(std::vector<device_property> & json_properties, std::string json_file_location) {
     ptree pt;
-    ROS_INFO("JSON file location: %s", json_file_location.c_str());
     boost::property_tree::read_json(json_file_location, pt);
     
     for (ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
@@ -135,7 +132,7 @@ void parse_json(std::vector<device_property> & json_properties, std::string json
         size_t size_of_response = 0; 
         bool big_endian_response = true;
         try {
-	    ignore = it->second.get<bool>("ignore");
+            ignore = it->second.get<bool>("ignore");
             baud = it->second.get<int>("baud");
             msg = it->second.get<std::string>("ack_message");
             rsp = it->second.get<std::string>("ack_response");
