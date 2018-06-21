@@ -308,6 +308,12 @@ int main(int argc, char ** argv)
     ros::init(argc, argv, "imu");
     ros::NodeHandle nh("~");
 
+    // Get the topic name and topic buffer size
+    std::string topic_name;
+    int topic_buffer_size;
+    nh.getParam("topic_name", topic_name);
+    nh.getParam("topic_buffer_size", topic_buffer_size);
+
     // Get the device id
     monitor::GetSerialDevice srv;
     nh.getParam("device_id", srv.request.device_id);
@@ -328,7 +334,7 @@ int main(int argc, char ** argv)
     ROS_INFO("Using IMU on fd \"%s\"", srv.response.device_fd.c_str());
 
     // Declare publisher
-    ros::Publisher pub = nh.advertise<peripherals::imu>("imu_sensor", 10);
+    ros::Publisher pub = nh.advertise<peripherals::imu>(topic_name, topic_buffer_size);
 
     // Update velocity "updates_per_publish" times for every topic publish
     imu dev(srv.response.device_fd);
