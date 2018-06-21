@@ -1,7 +1,0 @@
-<launch>
-    <include file="$(find vision)/launchfiles/camera_one.launch"/>
-    <include file="$(find peripherals)/launchfiles/depth_node.launch"/> 
-    <include file="$(find peripherals)/launchfiles/power_board.launch"/> 
-    <include file="$(find webgui)/webgui.launch"/>
-    <node name="rov" pkg="navigation" type="rov"/>
-</launch>
