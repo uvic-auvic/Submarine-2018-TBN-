@@ -88,11 +88,6 @@ void control_system::update_error()
     float depth_error = depth_pid->calculate(this->desired_velocity.z, this->imu_velocity.z);
 }
 
-int command_to_thrust(double thrust, int direction){
-    //forward: rpm = 21.74167 - 43.47222
-    //reverse: rpm = 31.84857 - 225.50476
-}
-
 int main(int argc, char ** argv)
 {
     ros::init(argc, argv, "control_system_node");
