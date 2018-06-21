@@ -79,7 +79,7 @@ imu::imu(const std::string & port, int baud_rate, int timeout) {
         mag_gain_scale = ((int16_t) ((response_buffer[1] << 8) | response_buffer[2]));
     }
     else {      
-        ROS_INFO("Bad Checksum, failed to get MagGainScale");
+        ROS_ERROR("Bad Checksum, failed to get MagGainScale");
     }
 
     ROS_INFO("Acquiring the accelerometer gain scale.");
@@ -90,7 +90,7 @@ imu::imu(const std::string & port, int baud_rate, int timeout) {
         accel_gain_scale = ((int16_t) ((response_buffer[1] << 8) | response_buffer[2]));
     }
     else {      
-        ROS_INFO("Bad Checksum, failed to get AccelGainScale");
+        ROS_ERROR("Bad Checksum, failed to get AccelGainScale");
     }
 
     ROS_INFO("Acquiring the gyroscope gain scale.");
@@ -101,7 +101,7 @@ imu::imu(const std::string & port, int baud_rate, int timeout) {
         gyro_gain_scale = ((int16_t) ((response_buffer[1] << 8) | response_buffer[2]));
     }
     else {      
-        ROS_INFO("Bad Checksum, failed to get GyroGainScale");
+        ROS_ERROR("Bad Checksum, failed to get GyroGainScale");
     }
     
     ROS_INFO("Gain scales: M:%f, A:%f, G:%f", mag_gain_scale, accel_gain_scale, gyro_gain_scale);
