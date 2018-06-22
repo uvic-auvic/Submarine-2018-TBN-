@@ -24,7 +24,7 @@ public:
     motor_controller(const std::string & port, int baud_rate = 9600, int timeout = 1000);
     ~motor_controller();
     bool setMotorPWM(MotorReq &req, MotorRes &res);
-    bool setAllMotors(MotorsReq &req, MotorsRes &res);
+    bool setAllMotorsPWM(MotorsReq &req, MotorsRes &res);
     bool stopMotor(MotorReq &req, MotorRes &res);
     bool stopAllMotors(MotorReq &, MotorRes &);
     bool getRPM(MotorsReq &, MotorsRes &);
