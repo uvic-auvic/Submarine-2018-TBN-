@@ -59,7 +59,7 @@ std::string motor_controller::write(const std::string & out, bool ignore_respons
 {
     connection->flush();
     connection->write(out + eol);
-    ROS_ERROR("%s", out.c_str());
+    //ROS_INFO("%s", out.c_str());
     if (ignore_response) {
         return "";
     }
@@ -167,11 +167,11 @@ int main(int argc, char ** argv)
 
     ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if (!client.call(srv)) {
-        ROS_INFO("Couldn't get \"%s\" file descripter. Shutting down", srv.request.device_id.c_str());
+        ROS_ERROR("Couldn't get \"%s\" file descripter. Shutting down", srv.request.device_id.c_str());
         return 1;
     }
 
-    ROS_ERROR("Using Motor Controller on fd %s\n", srv.response.device_fd.c_str());
+    ROS_INFO("Using Motor Controller on fd %s\n", srv.response.device_fd.c_str());
 
     motor_controller m(srv.response.device_fd);
 
