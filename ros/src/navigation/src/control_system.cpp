@@ -35,7 +35,10 @@ private:
 };
 
 control_system::control_system():
-    nh(ros::NodeHandle("~"))
+    nh(ros::NodeHandle("~")),
+    current_request(boost::shared_ptr<navigation::nav_request>(new navigation::nav_request())),
+    imu_data(boost::shared_ptr<peripherals::imu>(new peripherals::imu())),
+    current_depth(0)
 {
     // General Control System Parameters
     double loop_rate, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
@@ -97,14 +100,6 @@ control_system::control_system():
     angular_pos_r = new position_controller(
             min_angl_vel, max_angl_vel, min_angl_pos, max_angl_pos, dt, Kp_pos_r, Ki_pos_r, Kp_vel_r, Ki_vel_r);
     angular_vel_yw = new velocity_controller(min_angl_vel, max_angl_vel, dt, Kp_vel_yw, Ki_vel_yw);
-
-    // ROS Message Constructors initialize everything to 0
-    current_request = boost::shared_ptr<navigation::nav_request>(new navigation::nav_request());
-
-    // ROS Message Constructors initialize everything to 0
-    imu_data = boost::shared_ptr<peripherals::imu>(new peripherals::imu());
-
-    current_depth = 0;
 }
 
 control_system::~control_system()
