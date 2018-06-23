@@ -11,7 +11,7 @@
 
 class rov_mapper {
 public:
-    rov_mapper(double max_speed_mps, double yaw_rate_dps); 
+    rov_mapper(double max_speed_ms, double yaw_rate_degs); 
     void recieve_joystick(const navigation::joystick::ConstPtr &msg);
     void recieve_keyboard(const navigation::keyboard::ConstPtr &msg);
 private:
@@ -22,11 +22,11 @@ private:
     bool S_pressed;
     bool D_pressed;
     double depth;
-    const double max_speed_mps;
-    const double yaw_rate_dps;
+    const double max_speed_ms;
+    const double yaw_rate_degs;
 };
 
-rov_mapper::rov_mapper(double max_speed_mps, double yaw_rate_dps) 
+rov_mapper::rov_mapper(double max_speed_ms, double yaw_rate_degs) 
     :   nh(ros::NodeHandle("~")),
         nav_pub(nh.advertise<navigation::nav_request>("/nav/navigation", 5)),
         W_pressed(false),
@@ -34,8 +34,8 @@ rov_mapper::rov_mapper(double max_speed_mps, double yaw_rate_dps)
         S_pressed(false),
         D_pressed(false),
         depth(0.0),
-        max_speed_mps(max_speed_mps),
-        yaw_rate_dps(yaw_rate_dps) {}
+        max_speed_ms(max_speed_ms),
+        yaw_rate_degs(yaw_rate_degs) {}
 
 void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
     bool fire = msg->buttons[0];
@@ -85,20 +85,20 @@ void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
 
     if (W_pressed) {
         // Joystick axes go from [-100 100]. We want to go from [-max_speed max_speed]
-        nav_msg.sideways_velocity = (max_speed_mps * (double)msg->axes[0]) / 100.0;
-        nav_msg.forwards_velocity = (max_speed_mps * (double)msg->axes[1]) / 100.0;
+        nav_msg.sideways_velocity = (max_speed_ms * (double)msg->axes[0]) / 100.0;
+        nav_msg.forwards_velocity = (max_speed_ms * (double)msg->axes[1]) / 100.0;
         nav_pub.publish(nav_msg);
         return;
     } 
     
     if (D_pressed) {
-        nav_msg.yaw_rate = yaw_rate_dps; // degrees per second
+        nav_msg.yaw_rate = yaw_rate_degs; // degrees per second
         nav_pub.publish(nav_msg);
         return;
     }
 
     if (A_pressed) {
-        nav_msg.yaw_rate = -yaw_rate_dps; // degrees per second
+        nav_msg.yaw_rate = -yaw_rate_degs; // degrees per second
         nav_pub.publish(nav_msg);
         return;
     }
@@ -118,11 +118,11 @@ int main(int argc, char ** argv) {
     ros::init(argc, argv, "rov");
     ros::NodeHandle nh("~");
 
-    double max_speed_mps, yaw_rate_dps;
-    nh.getParam("max_speed_mps", max_speed_mps);
-    nh.getParam("yaw_rate_dps", yaw_rate_dps);
+    double max_speed_ms, yaw_rate_degs;
+    nh.getParam("max_speed_ms", max_speed_ms);
+    nh.getParam("yaw_rate_degs", yaw_rate_degs);
     
-    rov_mapper controls(max_speed_mps, yaw_rate_dps);
+    rov_mapper controls(max_speed_ms, yaw_rate_degs);
     ros::Subscriber joy = nh.subscribe<navigation::joystick>("/nav/joystick", 1, &rov_mapper::recieve_joystick, &controls);
     ros::Subscriber key = nh.subscribe<navigation::keyboard>("/nav/keyboard", 1, &rov_mapper::recieve_keyboard, &controls);
     ros::spin();
