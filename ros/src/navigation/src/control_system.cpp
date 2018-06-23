@@ -3,6 +3,7 @@
 #include "navigation/nav.h"
 #include "navigation/nav_request.h"
 #include "peripherals/imu.h"
+#include "peripherals/powerboard.h"
 #include "controllers.hpp"
 #include "geometry_msgs/Vector3.h"
 
@@ -21,6 +22,7 @@ public:
     ~control_system();
     void receive_nav_request(const navigation::nav_request::ConstPtr &msg);
     void receive_imu_data(const peripherals::imu::ConstPtr &msg);
+    void receive_powerboard_data(const peripherals::powerboard::ConstPtr &msg);
     void compute_output_vectors(navigation::nav &msg);
 private:
     // Controllers
@@ -46,8 +48,6 @@ control_system::control_system(
     double Kp_pos_r, double Ki_pos_r, double Kp_vel_r, double Ki_vel_r,
     double Kp_vel_yw, double Ki_vel_yw)
 {
-    ROS_ERROR("Kp_pos_z:%f, Ki_pos_z:%f, Kp_vel_z:%f, Ki_vel_z:%f", Kp_pos_z, Ki_pos_z, Kp_vel_z, Ki_vel_z);
-
     linear_vel_x = new velocity_controller(lin_min_vel, lin_max_vel, dt, Kp_vel_x, Ki_vel_x);
     linear_vel_y = new velocity_controller(lin_min_vel, lin_max_vel, dt, Kp_vel_y, Ki_vel_y);
     linear_pos_z = new position_controller(
@@ -88,6 +88,12 @@ void control_system::receive_nav_request(const navigation::nav_request::ConstPtr
 void control_system::receive_imu_data(const peripherals::imu::ConstPtr &msg)
 {       
     imu_data = *msg;
+}
+
+void control_system::receive_powerboard_data(const peripherals::powerboard::ConstPtr &msg)
+{      
+    // depth[m] = pressure[N/m^2] / (density[kg/m^3] * gravity[N/kg])
+    current_depth = msg->external_pressure / (997 * 9.81);
 }
     
 void control_system::compute_output_vectors(navigation::nav &msg)
@@ -164,10 +170,14 @@ int main(int argc, char ** argv)
 
     ros::Publisher pub_vectors = nh.advertise<navigation::nav>("/nav/velocity_vectors", 1);
 
-    ros::Subscriber sub_nav = 
-        nh.subscribe<navigation::nav_request>("/nav/navigation", 1, &control_system::receive_nav_request, &ctrl);
-    ros::Subscriber sub_imu = 
-        nh.subscribe<peripherals::imu>("/imu/imu_sensor", 1, &control_system::receive_imu_data, &ctrl);
+    ros::Subscriber sub_nav = nh.subscribe<navigation::nav_request>
+        ("/nav/navigation", 1, &control_system::receive_nav_request, &ctrl);
+
+    ros::Subscriber sub_imu = nh.subscribe<peripherals::imu>
+        ("/imu/imu_sensor", 1, &control_system::receive_imu_data, &ctrl);
+
+    ros::Subscriber sub_pbd = nh.subscribe<peripherals::powerboard>
+        ("/power_board/power_board_data", 1, &control_system::receive_powerboard_data, &ctrl);
 
     ros::Rate r(loop_rate);
     while(ros::ok()) { 

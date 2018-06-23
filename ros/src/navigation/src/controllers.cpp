@@ -1,12 +1,10 @@
 #include "controllers.hpp"
-#include <ros/ros.h>
 
 /* ------ Position Controller ------ */
 
 position_controller::position_controller(double min_vel, double max_vel, double min_pos, double max_pos,
         double dt, double Kpp, double Kip, double Kpv, double Kiv)
 {
-    ROS_ERROR("Kip is %f", Kip);
     // Initialize PI controller for position
     this->position_pi = new PID(dt, max_pos, min_pos, Kpp, 0.0, Kip);
 
@@ -26,17 +24,11 @@ position_controller::~position_controller()
 
 double position_controller::calculate(double position_desired, double position_actual, double velocity_actual)
 {
-    ROS_ERROR("PID: Desired position: %f, Actual position: %f, Actual velocity: %f", position_desired, position_actual, velocity_actual);
-
     // Get PI result from positional PI controller
     double position_correction = this->position_pi->calculate(position_desired, position_actual);
 
-    ROS_ERROR("PID: Corrected position: %f", position_correction);
-
     // Take derivative of positional correction to get a velocity 
     double velocity_desired = this->position_derivator->calculate(position_correction, 0);
-
-    ROS_ERROR("PID: Desired Velocity: %f", velocity_desired);
 
     // Compute a velocity correction
     return this->velocity_pi->calculate(velocity_desired, velocity_actual);
