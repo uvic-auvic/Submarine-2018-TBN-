@@ -38,7 +38,6 @@ rov_mapper::rov_mapper(double max_speed_mps, double yaw_rate_dps)
         yaw_rate_dps(yaw_rate_dps) {}
 
 void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
-    
     bool fire = msg->buttons[0];
     bool stop_pressed = msg->buttons[3];
     bool up_pressed = msg->buttons[1];
@@ -103,6 +102,8 @@ void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
         nav_pub.publish(nav_msg);
         return;
     }
+
+    // set motor to stop
 
 }
 

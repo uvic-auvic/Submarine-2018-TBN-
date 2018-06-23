@@ -101,9 +101,9 @@ void control_system::compute_output_vectors(navigation::nav &msg)
     msg.direction.x = linear_vel_x->calculate(current_request.forwards_velocity, imu_data.velocity.x);
     msg.direction.y = linear_vel_y->calculate(current_request.sideways_velocity, imu_data.velocity.y);
     msg.direction.z = linear_pos_z->calculate(current_request.depth, current_depth, imu_data.velocity.z);
-    msg.rotation.pitch = angular_pos_p->calculate(0, imu_data.euler_angles.pitch, imu_data.compensated_angular_rate.y);
-    msg.rotation.roll = angular_pos_r->calculate(0, imu_data.euler_angles.roll, imu_data.compensated_angular_rate.x);
-    msg.rotation.yaw = angular_vel_yw->calculate(current_request.yaw_rate, imu_data.compensated_angular_rate.z);
+    msg.orientation.pitch = angular_pos_p->calculate(0, imu_data.euler_angles.pitch, imu_data.compensated_angular_rate.y);
+    msg.orientation.roll = angular_pos_r->calculate(0, imu_data.euler_angles.roll, imu_data.compensated_angular_rate.x);
+    msg.orientation.yaw = angular_vel_yw->calculate(current_request.yaw_rate, imu_data.compensated_angular_rate.z);
 }
 
 int main(int argc, char ** argv)

@@ -1,2 +1,2 @@
 geometry_msgs/Vector3 direction
-peripherals/orientation rotation
+peripherals/orientation orientation
