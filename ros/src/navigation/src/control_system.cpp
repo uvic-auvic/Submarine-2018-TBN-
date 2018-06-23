@@ -10,7 +10,8 @@ class control_system
 {
 public:
     control_system(
-        double dt, double lin_min, double lin_max, double angl_min, double angl_max, 
+        double dt, double lin_min_vel, double lin_max_vel, double lin_min_pos, double lin_max_pos, 
+        double angl_min_vel, double angl_max_vel, double angl_min_pos, double angl_max_pos, 
         double Kp_vel_x, double Ki_vel_x, double Kp_vel_y, double Ki_vel_y,
         double Kp_pos_z, double Ki_pos_z, double Kp_vel_z, double Ki_vel_z,
         double Kp_pos_p, double Ki_pos_p, double Kp_vel_p, double Ki_vel_p,
@@ -37,19 +38,25 @@ private:
 };
 
 control_system::control_system(
-    double dt, double lin_min, double lin_max, double angl_min, double angl_max, 
+    double dt, double lin_min_vel, double lin_max_vel, double lin_min_pos, double lin_max_pos,
+    double angl_min_vel, double angl_max_vel, double angl_min_pos, double angl_max_pos, 
     double Kp_vel_x, double Ki_vel_x, double Kp_vel_y, double Ki_vel_y,
     double Kp_pos_z, double Ki_pos_z, double Kp_vel_z, double Ki_vel_z,
     double Kp_pos_p, double Ki_pos_p, double Kp_vel_p, double Ki_vel_p,
     double Kp_pos_r, double Ki_pos_r, double Kp_vel_r, double Ki_vel_r,
     double Kp_vel_yw, double Ki_vel_yw)
 {
-    linear_vel_x = new velocity_controller(lin_min, lin_max, dt, Kp_vel_x, Ki_vel_x);
-    linear_vel_y = new velocity_controller(lin_min, lin_max, dt, Kp_vel_y, Ki_vel_y);
-    linear_pos_z = new position_controller(lin_min, lin_max, dt, Kp_pos_z, Ki_pos_z, Kp_vel_z, Ki_vel_z);
-    angular_pos_p = new position_controller(angl_min, angl_max, dt, Kp_pos_p, Ki_pos_p, Kp_vel_p, Ki_vel_p);
-    angular_pos_r = new position_controller(angl_min, angl_max, dt, Kp_pos_r, Ki_pos_r, Kp_vel_r, Ki_vel_r);
-    angular_vel_yw = new velocity_controller(angl_min, angl_max, dt, Kp_vel_yw, Ki_vel_yw);
+    ROS_ERROR("Kp_pos_z:%f, Ki_pos_z:%f, Kp_vel_z:%f, Ki_vel_z:%f", Kp_pos_z, Ki_pos_z, Kp_vel_z, Ki_vel_z);
+
+    linear_vel_x = new velocity_controller(lin_min_vel, lin_max_vel, dt, Kp_vel_x, Ki_vel_x);
+    linear_vel_y = new velocity_controller(lin_min_vel, lin_max_vel, dt, Kp_vel_y, Ki_vel_y);
+    linear_pos_z = new position_controller(
+            lin_min_vel, lin_max_vel, lin_min_pos, lin_max_pos, dt, Kp_pos_z, Ki_pos_z, Kp_vel_z, Ki_vel_z);
+    angular_pos_p = new position_controller(
+            angl_min_vel, angl_max_vel, angl_min_pos, angl_max_pos, dt, Kp_pos_p, Ki_pos_p, Kp_vel_p, Ki_vel_p);
+    angular_pos_r = new position_controller(
+            angl_min_vel, angl_max_vel, angl_min_pos, angl_max_pos, dt, Kp_pos_r, Ki_pos_r, Kp_vel_r, Ki_vel_r);
+    angular_vel_yw = new velocity_controller(angl_min_vel, angl_max_vel, dt, Kp_vel_yw, Ki_vel_yw);
 
     current_request.depth = 0;
     current_request.yaw_rate = 0;
@@ -99,12 +106,17 @@ int main(int argc, char ** argv)
     ros::NodeHandle nh("~");
 
     // General Control System Parameters
-    double loop_rate, min_lin, max_lin, min_angl, max_angl;
+    double loop_rate, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
+    double min_angl_vel, max_angl_vel, min_angl_pos, max_angl_pos;
     nh.getParam("loop_rate", loop_rate);
-    nh.getParam("min_linear_val", min_lin);
-    nh.getParam("max_linear_val", max_lin);
-    nh.getParam("min_angular_val", min_angl);
-    nh.getParam("max_angular_val", max_angl);
+    nh.getParam("min_linear_vel", min_lin_vel);
+    nh.getParam("max_linear_vel", max_lin_vel);
+    nh.getParam("min_linear_pos", min_lin_pos);
+    nh.getParam("max_linear_pos", max_lin_pos);
+    nh.getParam("min_angular_vel", min_angl_vel);
+    nh.getParam("max_angular_vel", max_angl_vel);
+    nh.getParam("min_angular_pos", min_angl_pos);
+    nh.getParam("max_angular_pos", max_angl_pos);
     
     // Velocity X Control System
     double Kp_vel_x, Ki_vel_x;
@@ -143,8 +155,11 @@ int main(int argc, char ** argv)
     nh.getParam("Ki_vel_yw", Ki_vel_yw);
 
     double dt = 1.0 / loop_rate;
-    control_system ctrl(dt, min_lin, max_lin, min_angl, max_angl, Kp_vel_x, Ki_vel_x, Kp_vel_y, Ki_vel_y,
-            Kp_pos_z, Ki_pos_z, Kp_vel_z, Ki_vel_z, Kp_pos_p, Ki_pos_p, Kp_vel_p, Ki_vel_p, Kp_pos_r, 
+    control_system ctrl(dt, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos, 
+            min_angl_vel, max_angl_vel, min_angl_pos, max_angl_pos,
+            Kp_vel_x, Ki_vel_x, Kp_vel_y, Ki_vel_y, 
+            Kp_pos_z,  Ki_pos_z, Kp_vel_z, Ki_vel_z, 
+            Kp_pos_p, Ki_pos_p, Kp_vel_p, Ki_vel_p, Kp_pos_r, 
             Ki_pos_r, Kp_vel_r, Ki_vel_r, Kp_vel_yw, Ki_vel_yw);
 
     ros::Publisher pub_vectors = nh.advertise<navigation::nav>("/nav/velocity_vectors", 1);
@@ -156,8 +171,14 @@ int main(int argc, char ** argv)
 
     ros::Rate r(loop_rate);
     while(ros::ok()) { 
+        // Get the output vectors from the control system
         navigation::nav output_vectors;
         ctrl.compute_output_vectors(output_vectors);
+
+        // Normalize the vectors
+        output_vectors.direction.x /= max_lin_vel;
+        output_vectors.direction.y /= max_lin_vel;
+        output_vectors.direction.z /= max_lin_vel;
         pub_vectors.publish(output_vectors);
 
         ros::spinOnce();

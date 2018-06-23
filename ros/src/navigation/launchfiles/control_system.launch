@@ -1,10 +1,14 @@
 <launch>
     <!-- General Control System Parameters -->
-    <arg name="loop_rate" default="10.0"/>
-    <arg name="min_linear_val" default="-5.0"/>
-    <arg name="max_linear_val" default="5.0"/>
-    <arg name="min_angular_val" default="-180.0"/>
-    <arg name="max_angular_val" default="180.0"/>
+    <arg name="loop_rate" default="1.0"/>
+    <arg name="min_linear_vel" default="-5.0"/>
+    <arg name="max_linear_vel" default="5.0"/>
+    <arg name="min_linear_pos" default="-100"/>
+    <arg name="max_linear_pos" default="100"/>
+    <arg name="min_angular_vel" default="-180.0"/>
+    <arg name="max_angular_vel" default="180.0"/>
+    <arg name="min_angular_pos" default="-90"/>
+    <arg name="max_angular_pos" default="90"/>
 
     <!-- Velocity X Control System (Forward/Backwards) -->
     <arg name="Kp_vel_x" default="0.1"/>
@@ -15,8 +19,8 @@
     <arg name="Ki_vel_y" default="0.01"/>
    
     <!-- Position Z Control System (Depth/Up/Down) -->
-    <arg name="Kp_pos_z" default="0.1"/>
-    <arg name="Ki_pos_z" default="0.01"/>
+    <arg name="Kp_pos_z" default="0.25"/>
+    <arg name="Ki_pos_z" default="0.1"/>
     <arg name="Kp_vel_z" default="0.1"/>
     <arg name="Ki_vel_z" default="0.01"/>
 
@@ -27,8 +31,8 @@
     <arg name="Ki_vel_p" default="0.01"/>
 
     <!-- Position Roll Control System -->
-    <arg name="Kp_ros_r" default="0.1"/>
-    <arg name="Ki_ros_r" default="0.01"/>
+    <arg name="Kp_pos_r" default="0.1"/>
+    <arg name="Ki_pos_r" default="0.01"/>
     <arg name="Kp_vel_r" default="0.1"/>
     <arg name="Ki_vel_r" default="0.01"/>
     
@@ -36,12 +40,16 @@
     <arg name="Kp_vel_yw" default="0.1"/>
     <arg name="Ki_vel_yw" default="0.01"/>
     
-    <node name ="rov" pkg="navigation" type="rov" required="true">
+    <node name ="control_system" pkg="navigation" type="control_system" required="true">
         <param name="loop_rate" value="$(arg loop_rate)"/>
-        <param name="min_linear_val" value="$(arg min_linear_val)"/>
-        <param name="max_linear_val" value="$(arg max_linear_val)"/>
-        <param name="min_angular_val" value="$(arg min_angular_val)"/>
-        <param name="max_angular_val" value="$(arg max_angular_val)"/>
+        <param name="min_linear_vel" value="$(arg min_linear_vel)"/>
+        <param name="max_linear_vel" value="$(arg max_linear_vel)"/>
+        <param name="min_linear_pos" value="$(arg min_linear_pos)"/>
+        <param name="max_linear_pos" value="$(arg max_linear_pos)"/>
+        <param name="min_angular_vel" value="$(arg min_angular_vel)"/>
+        <param name="max_angular_vel" value="$(arg max_angular_vel)"/>
+        <param name="min_angular_pos" value="$(arg min_angular_pos)"/>
+        <param name="max_angular_pos" value="$(arg max_angular_pos)"/>
         <param name="Kp_vel_x" value="$(arg Kp_vel_x)"/>
         <param name="Ki_vel_x" value="$(arg Ki_vel_x)"/>
         <param name="Kp_vel_y" value="$(arg Kp_vel_y)"/>
@@ -54,8 +62,8 @@
         <param name="Ki_pos_p" value="$(arg Ki_pos_p)"/>
         <param name="Kp_vel_p" value="$(arg Kp_vel_p)"/>
         <param name="Ki_vel_p" value="$(arg Ki_vel_p)"/>
-        <param name="Kp_ros_r" value="$(arg Kp_ros_r)"/>
-        <param name="Ki_ros_r" value="$(arg Ki_ros_r)"/>
+        <param name="Kp_pos_r" value="$(arg Kp_pos_r)"/>
+        <param name="Ki_pos_r" value="$(arg Ki_pos_r)"/>
         <param name="Kp_vel_r" value="$(arg Kp_vel_r)"/>
         <param name="Ki_vel_r" value="$(arg Ki_vel_r)"/>
         <param name="Kp_vel_yw" value="$(arg Kp_vel_yw)"/>
