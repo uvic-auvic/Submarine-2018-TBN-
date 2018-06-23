@@ -27,7 +27,7 @@ double position_controller::calculate(double position_desired, double position_a
     double position_correction = this->position_pi->calculate(position_desired, position_actual);
 
     // Take derivative of positional correction to get a velocity 
-    double velocity_desired = this->position_derivator->calculate(position_correction, position_actual);
+    double velocity_desired = this->position_derivator->calculate(position_correction, 0);
 
     // Compute a velocity correction
     return this->velocity_pi->calculate(velocity_desired, velocity_actual);

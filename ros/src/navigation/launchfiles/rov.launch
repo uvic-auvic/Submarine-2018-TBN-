@@ -1,0 +1,11 @@
+<launch>
+
+    <arg name="max_speed_mps" default="1.5"/>
+    <arg name="yaw_rate_dps" default="10.0"/>
+    
+    <node name ="rov" pkg="navigation" type="rov" required="true">
+        <param name="max_speed_mps" value="$(arg max_speed_mps)"/>
+        <param name="yaw_rate_dps" value="$(arg yaw_rate_dps)"/>
+    </node>
+
+</launch>

@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
    nav.msg
    joystick.msg
    keyboard.msg
+   nav_request.msg
  )
 
 
@@ -26,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
    DEPENDENCIES
    std_msgs
    geometry_msgs
+   peripherals
  )
 
 catkin_package(
