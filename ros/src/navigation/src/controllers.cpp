@@ -6,9 +6,6 @@
 position_controller::position_controller(double min_vel, double max_vel, double min_pos, double max_pos,
         double dt, double Kpp, double Kip, double Kpv, double Kiv)
 {
-    ROS_ERROR("min_vel:%f, max_vel:%f, min_pos:%f, max_pos:%f, dt:%f, Kpp:%f, Kip:%f, Kpv:%f, Kiv:%f", 
-            min_vel, max_vel, min_pos, max_pos, dt, Kpp, Kip, Kpv, Kiv);
-
     // Initialize PI controller for position
     this->position_pi = new PID(dt, max_pos, min_pos, Kpp, 0.0, Kip);
 
@@ -42,8 +39,6 @@ double position_controller::calculate(double position_desired, double position_a
 
 velocity_controller::velocity_controller(double min, double max, double dt, double Kpv, double Kiv)
 {
-    ROS_ERROR("min:%f, max:%f, dt:%f, Kpv:%f, Kiv:%f", min, max, dt, Kpv, Kiv);
-    
     // Initialize PI controller for velocity
     this->velocity_pi = new PID(dt, max, min, Kpv, 0.0, Kiv);
 }

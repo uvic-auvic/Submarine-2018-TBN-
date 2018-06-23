@@ -116,20 +116,15 @@ control_system::~control_system()
     delete angular_pos_p;
     delete angular_pos_r;
     delete angular_vel_yw;
-
-/*    current_request.reset();
-    imu_data.reset();*/
 }
 
 void control_system::receive_nav_request(const navigation::nav_request::ConstPtr &msg) 
 {      
-    //current_request.reset();
     current_request = msg;
 }
 
 void control_system::receive_imu_data(const peripherals::imu::ConstPtr &msg)
 {      
-    //imu_data.reset();
     imu_data = msg;
 }
 
@@ -158,8 +153,6 @@ int main(int argc, char ** argv)
     double loop_rate, max_lin_vel;
     nh.getParam("loop_rate", loop_rate);
     nh.getParam("max_linear_vel", max_lin_vel);
-
-    ROS_ERROR("Max Velocity: %f", max_lin_vel);
 
     control_system ctrl;
 
