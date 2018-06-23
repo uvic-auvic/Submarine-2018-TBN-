@@ -34,10 +34,9 @@ private:
     double current_depth;
 };
 
-control_system::control_system()
+control_system::control_system():
+    nh(ros::NodeHandle("~"))
 {
-    nh = ros::NodeHandle("~");
-
     // General Control System Parameters
     double loop_rate, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
     double min_angl_vel, max_angl_vel, min_angl_pos, max_angl_pos;
