@@ -29,6 +29,10 @@ rov_mapper::rov_mapper()
 
 void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
     
+    if(msg->id != "WingMan Attack 2 (Vendor: 046d Product: c20d)"){
+	return;
+    }
+
     bool fire = msg->buttons[0];
     bool stop_pressed = msg->buttons[3];
     bool up_pressed = msg->buttons[1];

@@ -2,8 +2,9 @@
 #include "navigation/nav.h"
 #include "peripherals/motor.h"
 #include "peripherals/motors.h"
+#include "peripherals/motor_enums.h"
 
-#define NUMBER_OF_THRUSTERS     (8)
+#define Motor_Num    		(8)
 
 #define MAX_FORWARD_RPM         (3000.0)
 #define RPM_FORWARD_SQ_COEFF    (0.00000389750967963493)
@@ -21,6 +22,17 @@
 #define E_MATRIX_ROWS           (8)
 #define E_MATRIX_COLUMNS        (6)
 
+#define Z_FRONT_LEFT_POS	(0)
+#define Z_FRONT_RIGHT_POS	(1)
+#define Z_BACK_LEFT_POS		(2)
+#define Z_BACK_RIGHT_POS	(3)
+#define Y_FRONT_POS		(5)
+#define Y_BACK_POS		(6)
+#define X_LEFT_POS		(7)
+#define X_RIGHT_POS		(8)
+
+
+
 /*
 using MotorReq = peripherals::motor::Request;
 using MotorRes = peripherals::motor::Response;
@@ -33,7 +45,7 @@ class thrust_controller
 public:
     thrust_controller(std::string node_name);
     void generate_thrust_val(const navigation::nav::ConstPtr &msg);
-    void do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thrust_value[NUMBER_OF_THRUSTERS]);
+    void do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thrust_value[]);
 private:
     ros::NodeHandle nh;
     ros::ServiceClient motor_forward;
@@ -56,7 +68,7 @@ private:
             6
     */
 
-    //motor order = 1z, 2z, 3z, 4z, 5y, 6y, 7x, 8x
+    //motor order = 1z, 2z, 3z, 4z, 1y, 2y, 1x, 2x
     const double E_inverse[E_MATRIX_ROWS][E_MATRIX_COLUMNS] = {
         {0.0355383007316710, 0.0626175759204514, 0.226381127185469, -0.0223954134193317, -0.0186650739136927, -1.52872506320456e-17},
         {0.0355383007316709, -0.0626175759204520, 0.224903029899793, 0.0223954134193317, -0.0186650739136927, -1.61546123700340e-17},
@@ -67,9 +79,10 @@ private:
         {0.500349415164236, -0.0138177814947827, -1.91896838471135e-16, -1.39889909101611e-17, -1.04083408558608e-16, 0.0105883383101780},
         {0.499650584835764, 0.0138177814947827, 1.17507691233554e-16, -2.83689203505640e-17, -1.01047642475649e-16, -0.0105883383101780}
     };
-};
 
-void thrust_controller::do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thrust_value[E_MATRIX_ROWS]){
+}; // end class thrust_controller
+
+void thrust_controller::do_thrust_matrix(float tau[E_MATRIX_COLUMNS], float thrust_value[Motor_Num]){
     // Thrusters = (E^-1) * tau
     for(int r = 0; r < E_MATRIX_ROWS; r++){
         thrust_value[r] = 0;
@@ -137,44 +150,22 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
         msg->rotation.roll,
         msg->rotation.yaw
     };   
-    float thruster_vals[NUMBER_OF_THRUSTERS] = {0.0};
+    float thruster_vals[Motor_Num] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);
 
+    std::vector<short int> pwms(Motor_Num);
+
+    pwms[peripherals::motor_enums::X_Left] = this->thrust_to_command(thruster_vals[X_LEFT_POS]);
+    pwms[peripherals::motor_enums::X_Right] = this->thrust_to_command(thruster_vals[X_RIGHT_POS]);
+    pwms[peripherals::motor_enums::Y_Front] = this->thrust_to_command(thruster_vals[Y_FRONT_POS]);
+    pwms[peripherals::motor_enums::Y_Back] = this->thrust_to_command(thruster_vals[Y_BACK_POS]);
+    pwms[peripherals::motor_enums::Z_Front_Right] = this->thrust_to_command(thruster_vals[Z_FRONT_RIGHT_POS]);
+    pwms[peripherals::motor_enums::Z_Front_Left] = this->thrust_to_command(thruster_vals[Z_FRONT_LEFT_POS]);
+    pwms[peripherals::motor_enums::Z_Back_Right] = this->thrust_to_command(thruster_vals[Z_BACK_RIGHT_POS]);
+    pwms[peripherals::motor_enums::Z_Back_Left] = this->thrust_to_command(thruster_vals[Z_BACK_LEFT_POS]);
+    
     peripherals::motors srv;
-
-    peripherals::motor_info motor_i;
-
-    motor_i.name = "Z_Front_Left";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[0]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "Z_Front_Right";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[1]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "Z_Back_Left";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[2]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "Z_Back_Right";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[3]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "Y_Front";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[4]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "Y_Back";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[5]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "X_Left";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[6]);
-    srv.request.motors_in.push_back(motor_i);
-
-    motor_i.name = "X_Right";
-    motor_i.pwm = this->thrust_to_command(thruster_vals[7]);
-    srv.request.motors_in.push_back(motor_i);
+    srv.request.pwms = pwms;
 
     this->motor_set_all.call(srv.request, srv.response);
 }
