@@ -8,6 +8,8 @@
 
 using rosserv = ros::ServiceServer;
 using powerboardInfo = peripherals::powerboard;
+using PowerEnableReq = peripherals::power_enable::Request;
+using PowerEnableRes = peripherals::power_enable::Response;
 
 class power_board{
 public:
@@ -80,6 +82,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     // Populate message with temperature data
     if(temperature.length() >= 2) {     
         msg.temperature = (temperature[1] << 8) | (temperature[0]);
+        msg.temperature = (msg.temperature / 10.0) - 273.15;
     }
     else {      
         ROS_INFO("Temperature data is invalid. Data:%s\n", temperature.c_str());
@@ -104,6 +107,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     // Populate message with main housing pressure data
     if(pressure_internal.length() >= 2) {     
         msg.internal_pressure = (pressure_internal[1] << 8) | (pressure_internal[0]);
+        // No conversions needed, pressure is in Pa
     }
     else {      
         ROS_INFO("Internal housing pressure data is invalid. Data:%s\n", pressure_internal.c_str());
@@ -112,11 +116,48 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     // Populate message with external water pressure data
     if(pressure_external.length() >= 2) {     
         msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
+        // Convert from 0.01psi to Pa
+        msg.external_pressure *= 68.94757;
     }
     else {      
         ROS_INFO("External water pressure data is invalid. Data:%s\n", pressure_external.c_str());
     }
-} 
+}
+
+bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
+{      
+    // Enable/Disable Power to Motors
+    std::string out = "PME0";
+    out[3] = req.motor_pwr_enable ? "1" : "0";
+    write(out);
+
+    // Enable/Disable 5V Rail
+    out[1] = "5";
+    out[3] = req._5V_pwr_enable ? "1" : "0";
+    write(out);
+
+    // Enable/Disable 9V Rail
+    out[1] = "9";
+    out[3] = req._9V_pwr_enable ? "1" : "0";
+    write(out);
+
+    // Enable/Disable 12V Rail
+    out[1] = "T";
+    out[3] = req._12V_pwr_enable ? "1" : "0";
+    write(out);
+
+    // Enable/Disable Running Batteries in Parallel
+    out = "BP0";
+    out[2] = req.parallel_batteris_enable ? "1" : "0";
+    write(out);
+
+    // Saving this for last (Disabling System power cuts power to Jetson...)
+    // Enable/Disable System Power (includes Jetson power)
+    out = "PSE1";
+    out[3] = req.system_pwr_enable ? "1" : "0";
+    write(out);
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -136,12 +177,14 @@ int main(int argc, char ** argv)
     }
 
     ROS_INFO("Using Power Board on fd %s\n", srv.response.device_fd.c_str());
+    power_board device(srv.response.device_fd);
 
     ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 10);
+    ros::ServiceServer pwr_en = 
+        nh.advertiseService<peripherals::power_enable>("PowerEnable", &power_board::power_enabler, &device); 
 
     // Main loop
     ros::Rate r(loop_rate);
-    power_board device(srv.response.device_fd);
     while(ros::ok()) {
         // Publish message to topic 
         peripherals::powerboard msg;
