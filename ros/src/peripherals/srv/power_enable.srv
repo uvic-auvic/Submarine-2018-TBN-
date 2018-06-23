@@ -1,7 +1,7 @@
 bool motor_pwr_enable
 bool system_pwr_enable
-bool _5V_pwr_enable
-bool _9V_pwr_enable
-bool _12V_pwr_enable
+bool rail_5V_pwr_enable
+bool rail_9V_pwr_enable
+bool rail_12V_pwr_enable
 bool parallel_batteries_enable
 ---

@@ -17,6 +17,7 @@ add_service_files(
    FILES
    motor.srv
    motors.srv
+   power_enable.srv
 )
 
 add_message_files(

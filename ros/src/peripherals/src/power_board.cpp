@@ -5,6 +5,7 @@
 
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/powerboard.h"
+#include "peripherals/power_enable.h"
 
 using rosserv = ros::ServiceServer;
 using powerboardInfo = peripherals::powerboard;
@@ -16,6 +17,7 @@ public:
     power_board(const std::string & port, int baud_rate = 9600, int timeout = 1000);
     ~power_board();
     void get_powerboard_data(powerboardInfo & msg);
+    bool power_enabler(PowerEnableReq &req, PowerEnableRes &res);
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
@@ -128,33 +130,33 @@ bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
 {      
     // Enable/Disable Power to Motors
     std::string out = "PME0";
-    out[3] = req.motor_pwr_enable ? "1" : "0";
+    out.replace(3, 1, req.motor_pwr_enable ? "1" : "0");
     write(out);
 
     // Enable/Disable 5V Rail
-    out[1] = "5";
-    out[3] = req._5V_pwr_enable ? "1" : "0";
+    out.replace(1, 1, "5");
+    out.replace(3, 1, req.rail_5V_pwr_enable ? "1" : "0");
     write(out);
 
     // Enable/Disable 9V Rail
-    out[1] = "9";
-    out[3] = req._9V_pwr_enable ? "1" : "0";
+    out.replace(1, 1, "9");
+    out.replace(3, 1, req.rail_9V_pwr_enable ? "1" : "0");
     write(out);
 
     // Enable/Disable 12V Rail
-    out[1] = "T";
-    out[3] = req._12V_pwr_enable ? "1" : "0";
+    out.replace(1, 1, "T");
+    out.replace(3, 1, req.rail_12V_pwr_enable ? "1" : "0");
     write(out);
 
     // Enable/Disable Running Batteries in Parallel
     out = "BP0";
-    out[2] = req.parallel_batteris_enable ? "1" : "0";
+    out.replace(2, 1, req.parallel_batteries_enable ? "1" : "0");
     write(out);
 
     // Saving this for last (Disabling System power cuts power to Jetson...)
     // Enable/Disable System Power (includes Jetson power)
     out = "PSE1";
-    out[3] = req.system_pwr_enable ? "1" : "0";
+    out.replace(3, 1, req.system_pwr_enable ? "1" : "0");
     write(out);
 }
 
@@ -180,8 +182,7 @@ int main(int argc, char ** argv)
     power_board device(srv.response.device_fd);
 
     ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 10);
-    ros::ServiceServer pwr_en = 
-        nh.advertiseService<peripherals::power_enable>("PowerEnable", &power_board::power_enabler, &device); 
+    ros::ServiceServer pwr_en = nh.advertiseService("PowerEnable", &power_board::power_enabler, &device); 
 
     // Main loop
     ros::Rate r(loop_rate);
