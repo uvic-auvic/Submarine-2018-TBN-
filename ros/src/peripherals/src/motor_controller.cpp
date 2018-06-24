@@ -89,6 +89,7 @@ bool motor_controller::setMotorPWM(MotorReq &req, MotorRes &res)
 
 bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
 {
+    ROS_ERROR("SENDING STUFF OUT");
     char motor_num = '1';
     std::string out = "MSA";
     for (auto pwm : req.pwms) {
@@ -100,9 +101,13 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
         if (pwm > MAX_MOTOR_VALUE) {
             pwm = MAX_MOTOR_VALUE;
         }
-	out += (motor_num + dir + pwm);
+        out.push_back(dir); 
+        out.push_back(((char)(pwm/10) + '0'));
+        out.push_back(((char)(pwm%10) + '0'));
+	motor_num++;
     }
     this->write(out);
+    ROS_ERROR(out.c_str());
     return true;
 }
 

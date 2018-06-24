@@ -1,6 +1,6 @@
 {
     "motor_controller" : {
-	"ignore" : true,
+	"ignore" : false,
         "baud" : 9600,
         "ack_message" : "RID\n",
         "ack_response" : "Motor Controller\r\n",

@@ -50,7 +50,7 @@ private:
     ros::NodeHandle nh;
     ros::ServiceClient motor_forward;
     ros::ServiceClient motor_reverse;
-    ros::ServiceClient motor_set_all;
+    ros::ServiceClient setAllMotorsPWM;
     ros::ServiceClient motor_stop;
     ros::ServiceClient motors_stop;
 
@@ -132,23 +132,25 @@ thrust_controller::thrust_controller(std::string node_name) :
     nh(ros::NodeHandle("~")),
     motor_forward(nh.serviceClient<peripherals::motor>("/" + node_name + "/setMotorForward")),
     motor_reverse(nh.serviceClient<peripherals::motor>("/" + node_name + "/setMotorReverse")),
-    motor_set_all(nh.serviceClient<peripherals::motors>("/" + node_name + "/setAllMotors")),
+    setAllMotorsPWM(nh.serviceClient<peripherals::motors>("/" + node_name + "/setAllMotorsPWM")),
     motor_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopMotors")),
     motors_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopAllMotors"))
-    {}
+    {
+	
+    }
 
 void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg)
 {
-    ROS_INFO("X: %.2f Y: %.2f Z: %.2f Speed: %d\n"
-    , msg->direction.x, msg->direction.y, msg->direction.z, msg->speed);
-    
+    ROS_INFO("X: %.2f Y: %.2f Z: %.2f"
+    , msg->direction.x, msg->direction.y, msg->direction.z);   
+
     float tau[E_MATRIX_COLUMNS] = {
         (float)(msg->direction.x), 
         (float)(msg->direction.y), 
         (float)(msg->direction.z), 
-        msg->rotation.pitch,
-        msg->rotation.roll,
-        msg->rotation.yaw
+        (float)msg->orientation.pitch,
+        (float)msg->orientation.roll,
+        (float)msg->orientation.yaw
     };   
     float thruster_vals[Motor_Num] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);
@@ -167,8 +169,11 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     peripherals::motors srv;
     srv.request.pwms = pwms;
 
-    this->motor_set_all.call(srv.request, srv.response);
+    this->setAllMotorsPWM.call(srv.request, srv.response);
+
+    ROS_ERROR("MOTOR CALLED");
 }
+
 
 int main(int argc, char **argv)
 {

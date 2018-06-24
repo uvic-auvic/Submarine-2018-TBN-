@@ -7,17 +7,20 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  peripherals
   geometry_msgs
+)
+
+find_package(
+  peripherals
 )
 
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   rpy.msg
    nav.msg
    joystick.msg
    keyboard.msg
+   nav_request.msg
  )
 
 
@@ -26,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
    DEPENDENCIES
    std_msgs
    geometry_msgs
+   peripherals
  )
 
 catkin_package(
@@ -42,12 +46,13 @@ include_directories(
 
 add_executable(rov src/rov.cpp)
 target_link_libraries(rov ${catkin_LIBRARIES})
-add_dependencies(rov navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(rov navigation_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
 add_executable(thrustmap src/thrustmap.cpp)
 target_link_libraries(thrustmap ${catkin_LIBRARIES})
 add_dependencies(thrustmap navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
-add_executable(control_system src/control_system.cpp src/pid.cpp)
+
+add_executable(control_system src/control_system.cpp src/controllers.cpp src/controllers.hpp src/pid.cpp src/pid.h)
 target_link_libraries(control_system ${catkin_LIBRARIES})
 add_dependencies(control_system navigation_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
