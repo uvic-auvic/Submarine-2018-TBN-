@@ -12,7 +12,7 @@
 	"ignore" : false,
         "baud" : 115200,
         "ack_message" : "RID\n",
-        "ack_response" : "Hydrophones\r\n",
+        "ack_response" : "Hydrophones v1.0\r\n",
         "timeout": 1000,
         "convert_to_bytes" : false
     },
