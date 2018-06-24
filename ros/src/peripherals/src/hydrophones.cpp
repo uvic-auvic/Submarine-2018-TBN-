@@ -18,13 +18,52 @@ public:
     void acquire_hydro_data(std::vector<uint16_t> hydro_data[NUM_HYDROPHONES]);
 private:
     uint32_t stm32f4_crc32(uint8_t* data, size_t data_len, uint32_t crc = 0xFFFFFFFF);
+    ros::NodeHandle nh;
     std::unique_ptr<serial::Serial> connection = nullptr;
 };
 
-hydrophones::hydrophones(const std::string port, int baud_rate, int timeout)
+hydrophones::hydrophones(const std::string port, int baud_rate, int timeout) :
+    nh(ros::NodeHandle("~"))
 {       
     ROS_INFO("Connecting to hydrophones on port %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t)baud_rate, serial::Timeout::simpleTimeout(timeout)));
+
+    /* Get the packet and data sizes from launch file */
+    int packet_size, data_size;
+    nh.getParam("packet_size", packet_size);
+    nh.getParam("data_size", data_size);
+
+    /* Set the packet size */
+    std::string out = "PS";
+    out += (packet_size < 10000 ? "0" : "");
+    out += (packet_size < 1000 ? "0" : "");
+    out += (packet_size < 100 ? "0" : "");
+    out += (packet_size < 10 ? "0" : "");
+    out += std::to_string(packet_size);
+    std::string p_size = write(out, false);
+   
+    /* Set the data size */
+    out = "DS";
+    out += (data_size < 10000 ? "0" : "");
+    out += (data_size < 1000 ? "0" : "");
+    out += (data_size < 100 ? "0" : "");
+    out += (data_size < 10 ? "0" : "");
+    out += std::to_string(data_size);
+    std::string d_size = write(out, false);
+
+    uint16_t packet_size_actual;
+    if(p_size.length() >= 4)
+    {   
+        packet_size_actual = (p_size[1] << 8) | p_size[0];
+        ROS_ERROR("Packet Size is set to %u", packet_size_actual);
+    }
+   
+    uint16_t data_size_actual;
+    if(d_size.length() >= 4)
+    {   
+        data_size_actual = (d_size[1] << 8) | d_size[0];
+        ROS_ERROR("Data size is set to %u", data_size_actual);
+    }
 }
 
 hydrophones::~hydrophones()
@@ -35,6 +74,7 @@ hydrophones::~hydrophones()
 std::string hydrophones::write(const std::string out, bool ignore_response, const std::string eol)
 {   
     connection->flush();
+    ROS_ERROR("%s", out.c_str());
     connection->write(out + eol);
     connection->flushOutput();
 
@@ -66,6 +106,9 @@ void hydrophones::acquire_hydro_data(std::vector<uint16_t> hydro_data[NUM_HYDROP
         packet_count = header[6];
         packet_idx = header[7];
         uint16_t packet_size = (header[9] << 8) | header[8];
+        uint16_t total_size = (header[11] << 8) | header[10];
+
+        ROS_ERROR("CRC: %u, Packet Index: %u, Packet Count: %u, Packet Size: %u, Total Size: %u", crc, packet_idx, packet_count, packet_size, total_size);
 
         // Use header to determine how much data to read
         uint8_t* packet_data = new uint8_t[packet_size];
@@ -73,7 +116,7 @@ void hydrophones::acquire_hydro_data(std::vector<uint16_t> hydro_data[NUM_HYDROP
 
         // Check to see if there were any communication errors
         uint32_t host_crc = stm32f4_crc32(packet_data, packet_size);
-        if(stm32f4_crc32(packet_data, packet_size) != crc)
+        if(host_crc != crc)
         {       
             ROS_ERROR("Communication error. Executing packet resend.");
             packet_idx = 0; // Do this just in case this is the last packet (get through the while loop)
