@@ -215,7 +215,7 @@ int main(int argc, char** argv)
     nh.getParam("device_id", srv.request.device_id);
 
 
-    /*ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
+    ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if(!client.call(srv)) {     
         ROS_INFO("Couldn't get \"%s\" file descriptor. Shutting down", srv.request.device_id.c_str());
         return 1;
@@ -223,8 +223,7 @@ int main(int argc, char** argv)
 
     ROS_INFO("Using Hydrophones on fd %s\n", srv.response.device_fd.c_str());
 
-    hydrophones device(srv.response.device_fd.c_str());*/
-    hydrophones device("/dev/ttyS3");
+    hydrophones device(srv.response.device_fd.c_str());
 
     ros::ServiceServer raw_data_srv = nh.advertiseService("getRawData", &hydrophones::get_raw_data, &device);
         
