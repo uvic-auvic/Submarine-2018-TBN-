@@ -171,7 +171,7 @@ bool hydrophones::acquire_hydro_data(std::vector<peripherals::hydro> &hydro_data
 
     } while(packet_idx < (packet_count - 1));
 
-    connection->flush(); // Sent an extra "NEXT"
+    connection->flush(); 
 
     return true;
 }
