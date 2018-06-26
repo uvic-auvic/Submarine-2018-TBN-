@@ -17,6 +17,7 @@ add_service_files(
    FILES
    motor.srv
    motors.srv
+   hydro_data.srv
 )
 
 add_message_files(
@@ -26,6 +27,7 @@ add_message_files(
   imu.msg
   orientation.msg
   motor_info.msg
+  hydro.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

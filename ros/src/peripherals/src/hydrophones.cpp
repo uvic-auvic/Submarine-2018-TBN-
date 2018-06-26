@@ -3,11 +3,15 @@
 #include <string>
 #include <serial/serial.h>
 
+#include "peripherals/hydro_data.h"
+#include "peripherals/hydro.h"
 #include "monitor/GetSerialDevice.h"
 
 #define NUM_HYDROPHONES (4)
 #define PKT_HEADER_SIZE (12)
 
+using HydroDataReq = peripherals::hydro_data::Request;
+using HydroDataRes = peripherals::hydro_data::Response;
 
 class hydrophones
 {       
@@ -15,8 +19,9 @@ public:
     hydrophones(const std::string port, int baud_rate = 115200, int timeout = 1000);
     ~hydrophones();
     std::string write(const std::string out, bool ignore_response = true, const std::string eol = "\n");
-    void acquire_hydro_data(std::vector<uint16_t> hydro_data[NUM_HYDROPHONES]);
+    bool get_raw_data(HydroDataReq &req, HydroDataRes &res);
 private:
+    void acquire_hydro_data(std::vector<peripherals::hydro> &hydro_data);
     uint32_t stm32f4_crc32(uint8_t* data, size_t data_len, uint32_t crc = 0xFFFFFFFF);
     ros::NodeHandle nh;
     std::unique_ptr<serial::Serial> connection = nullptr;
@@ -86,8 +91,22 @@ std::string hydrophones::write(const std::string out, bool ignore_response, cons
     return connection->readline(65536ul, eol);
 }
 
-void hydrophones::acquire_hydro_data(std::vector<uint16_t> hydro_data[NUM_HYDROPHONES])
-{   
+bool hydrophones::get_raw_data(HydroDataReq &req, HydroDataRes &res)
+{       
+    acquire_hydro_data(res.hydro);
+
+    return true;
+}
+
+void hydrophones::acquire_hydro_data(std::vector<peripherals::hydro> &hydro_data)
+{  
+    // Initialize the list with all the data
+    for(int i = 0; i < NUM_HYDROPHONES; i++)
+    {   
+        peripherals::hydro data_list;
+        hydro_data.push_back(data_list);
+    }
+    
     uint8_t header[PKT_HEADER_SIZE];
     write("ADCDR");
 
@@ -131,7 +150,7 @@ void hydrophones::acquire_hydro_data(std::vector<uint16_t> hydro_data[NUM_HYDROP
         // Append data to output while we wait
         for(int i = 0; i < (packet_size/2); i++, data_index++)
         {   
-            hydro_data[data_index % NUM_HYDROPHONES].push_back((packet_data[(i*2)+1] << 8) | packet_data[i*2]); 
+            hydro_data[data_index % NUM_HYDROPHONES].raw_data.push_back((packet_data[(i*2)+1] << 8) | packet_data[i*2]); 
         }
 
         delete[] packet_data;
@@ -182,6 +201,7 @@ int main(int argc, char** argv)
     monitor::GetSerialDevice srv;
     nh.getParam("device_id", srv.request.device_id);
 
+
     /*ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if(!client.call(srv)) {     
         ROS_INFO("Couldn't get \"%s\" file descriptor. Shutting down", srv.request.device_id.c_str());
@@ -193,9 +213,8 @@ int main(int argc, char** argv)
     //hydrophones device(srv.response.device_fd.c_str());
     hydrophones device("/dev/ttyS3");
 
-    std::vector<uint16_t> data[4];
-    device.acquire_hydro_data(data);
-   
+    ros::ServiceServer raw_data_srv = nh.advertiseService("getRawData", &hydrophones::get_raw_data, &device);
+        
     ros::spin();
 
     return 0;
