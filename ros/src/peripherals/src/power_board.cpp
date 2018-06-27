@@ -5,6 +5,7 @@
 
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/powerboard.h"
+#include "peripherals/power_enable.h"
 
 #define RESPONSE_SIZE_CRA (14)
 #define RESPONSE_SIZE_VTA (6)
@@ -16,12 +17,15 @@
 
 using rosserv = ros::ServiceServer;
 using powerboardInfo = peripherals::powerboard;
+using PowerEnableReq = peripherals::power_enable::Request;
+using PowerEnableRes = peripherals::power_enable::Response;
 
 class power_board{
 public:
     power_board(const std::string & port, int baud_rate = 9600, int timeout = 1000);
     ~power_board();
     void get_powerboard_data(powerboardInfo & msg);
+    bool power_enabler(PowerEnableReq &req, PowerEnableRes &res);
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
@@ -104,7 +108,8 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     // Populate message with temperature data
     if(this->write("TMP", temperature, RESPONSE_SIZE_TMP) == RESPONSE_SIZE_TMP) {     
         // Convert to degrees C
-        msg.temperature = ((double)((temperature[1] << 8) | (temperature[0])) - 273.15) / 100.0;
+        msg.temperature = (temperature[1] << 8) | (temperature[0]);
+        msg.temperature = (msg.temperature / 10.0) - 273.15;
     }
     else {      
         ROS_ERROR("Temperature data is invalid.");
@@ -128,8 +133,8 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with main housing pressure data
     if((bytes = this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN)) == RESPONSE_SIZE_PIN) {     
-        // Convert to PSI
-        msg.internal_pressure = (double)((pressure_internal[1] << 8) | (pressure_internal[0])) * 0.0001450377;
+        msg.internal_pressure = (pressure_internal[1] << 8) | (pressure_internal[0]);
+        // No conversions needed, pressure is in Pa
     }
     else {      
         ROS_ERROR("Internal housing pressure data is invalid. Expected %d bytes, received %lu bytes.", RESPONSE_SIZE_PIN, bytes); 
@@ -137,12 +142,49 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
 
     // Populate message with external water pressure data
     if(this->write("PEX", pressure_external, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) {     
-        msg.external_pressure = (double)((pressure_external[1] << 8) | (pressure_external[0])) * 10.0E-2;
+        msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
+        // Convert from 0.01psi to Pa
+        msg.external_pressure *= 68.94757;
     }
     else {      
         ROS_ERROR("External water pressure data is invalid."); 
     }
-} 
+}
+
+bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
+{      
+    // Enable/Disable Power to Motors
+    std::string out = "PME0";
+    out.replace(3, 1, req.motor_pwr_enable ? "1" : "0");
+    write(out);
+
+    // Enable/Disable 5V Rail
+    out.replace(1, 1, "5");
+    out.replace(3, 1, req.rail_5V_pwr_enable ? "1" : "0");
+    write(out);
+
+    // Enable/Disable 9V Rail
+    out.replace(1, 1, "9");
+    out.replace(3, 1, req.rail_9V_pwr_enable ? "1" : "0");
+    write(out);
+
+    // Enable/Disable 12V Rail
+    out.replace(1, 1, "T");
+    out.replace(3, 1, req.rail_12V_pwr_enable ? "1" : "0");
+    write(out);
+
+    // Enable/Disable Running Batteries in Parallel
+    out = "BP0";
+    out.replace(2, 1, req.parallel_batteries_enable ? "1" : "0");
+    write(out);
+
+    // Saving this for last (Disabling System power cuts power to Jetson...)
+    // Enable/Disable System Power (includes Jetson power)
+    out = "PSE1";
+    out.replace(3, 1, req.system_pwr_enable ? "1" : "0");
+    write(out);
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -162,12 +204,13 @@ int main(int argc, char ** argv)
     }
 
     ROS_INFO("Using Power Board on fd %s\n", srv.response.device_fd.c_str());
+    power_board device(srv.response.device_fd);
 
-    ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 100);
+    ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 10);
+    ros::ServiceServer pwr_en = nh.advertiseService("PowerEnable", &power_board::power_enabler, &device); 
 
     // Main loop
     ros::Rate r(loop_rate);
-    power_board device(srv.response.device_fd);
     while(ros::ok()) {
         // Publish message to topic 
         peripherals::powerboard msg;

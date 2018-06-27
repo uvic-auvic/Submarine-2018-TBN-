@@ -17,6 +17,7 @@ add_service_files(
    FILES
    motor.srv
    motors.srv
+   power_enable.srv
 )
 
 add_message_files(
@@ -25,6 +26,7 @@ add_message_files(
   powerboard.msg
   imu.msg
   orientation.msg
+  motor_info.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
