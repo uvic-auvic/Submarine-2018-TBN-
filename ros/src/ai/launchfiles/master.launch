@@ -1,0 +1,9 @@
+<launch>
+     <arg name="wait_for_signal" default="false"/>
+     <arg name="time_delay" default="30"/>
+
+    <node name="ai_master" pkg="ai" type="master" respawn="true" respawn_delay="1" >
+        <param name="wait_for_signal" value="$(arg wait_for_signal)"/>
+        <param name="time_delay" value="$(arg wait_for_signal)"/>
+    </node>
+</launch>
