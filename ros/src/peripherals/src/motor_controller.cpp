@@ -41,7 +41,6 @@ motor_controller::motor_controller(const std::string & port, int baud_rate, int 
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
 
     peripherals::motor_enums motor_defs;
-    //ROS_ERROR("%u", nav_msg.X_Right);
 
     // Setup the motor name lookup dictionary
     motor_names_to_number["Z_Front_Right"] = motor_defs.Z_Front_Right;
@@ -89,7 +88,6 @@ bool motor_controller::setMotorPWM(MotorReq &req, MotorRes &res)
 
 bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
 {
-    ROS_ERROR("SENDING STUFF OUT");
     char motor_num = '1';
     std::string out = "MSA";
     for (auto pwm : req.pwms) {
@@ -107,7 +105,6 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
 	motor_num++;
     }
     this->write(out);
-    ROS_ERROR(out.c_str());
     return true;
 }
 

@@ -143,9 +143,6 @@ thrust_controller::thrust_controller(std::string node_name) :
 
 void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg)
 {
-    ROS_INFO("X: %.2f Y: %.2f Z: %.2f"
-    , msg->direction.x, msg->direction.y, msg->direction.z);   
-
     double tau[E_MATRIX_COLUMNS] = {
         msg->direction.x, 
         msg->direction.y, 
@@ -156,14 +153,8 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     };   
     double thruster_vals[Motor_Num] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);
-    for(int i = 0; i < 6; i++){
-        ROS_ERROR("Tau%d = %f", i, tau[i]);
-    }
-    for(int i = 0; i < 8; i++){
-        ROS_ERROR("Thrust%d = %f", i, thruster_vals[i]);
-    }
 
-    std::vector<short int> pwms(Motor_Num);
+    std::vector<int16_t> pwms(Motor_Num);
 
     pwms[peripherals::motor_enums::X_Left - 1] = this->thrust_to_command(thruster_vals[X_LEFT_POS]);
     pwms[peripherals::motor_enums::X_Right - 1] = this->thrust_to_command(thruster_vals[X_RIGHT_POS]);
@@ -173,17 +164,11 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     pwms[peripherals::motor_enums::Z_Front_Left - 1] = this->thrust_to_command(thruster_vals[Z_FRONT_LEFT_POS]);
     pwms[peripherals::motor_enums::Z_Back_Right - 1] = this->thrust_to_command(thruster_vals[Z_BACK_RIGHT_POS]);
     pwms[peripherals::motor_enums::Z_Back_Left - 1] = this->thrust_to_command(thruster_vals[Z_BACK_LEFT_POS]);
-
-    for(int i = 0; i < 8; i++){
-        ROS_ERROR("PWM%d = %d", i, pwms[i]);
-    }
     
     peripherals::motors srv;
     srv.request.pwms = pwms;
 
     this->setAllMotorsPWM.call(srv.request, srv.response);
-
-    ROS_ERROR("MOTOR CALLED");
 }
 
 
