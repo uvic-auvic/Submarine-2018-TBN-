@@ -7,6 +7,8 @@
 #include "controllers.hpp"
 #include "geometry_msgs/Vector3.h"
 
+#define ATMOSPHERIC_PRESSURE (1E5)
+
 class control_system
 {
 public:
@@ -126,7 +128,8 @@ void control_system::receive_powerboard_data(const peripherals::powerboard::Cons
 {      
     // depth[m] = pressure[N/m^2] / (density[kg/m^3] * gravity[N/kg])
     constexpr float div = 997 * 9.81;
-    current_depth = msg->external_pressure / div;
+    current_depth = (msg->external_pressure - ATMOSPHERIC_PRESSURE) / div;
+    ROS_ERROR("Depth is %f", current_depth);
 }
     
 void control_system::compute_output_vectors(navigation::nav &msg)

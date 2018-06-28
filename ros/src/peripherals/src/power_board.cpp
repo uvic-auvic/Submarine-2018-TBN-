@@ -6,6 +6,7 @@
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/powerboard.h"
 #include "peripherals/power_enable.h"
+#include "peripherals/pressure_avg.h"
 
 #define RESPONSE_SIZE_CRA (14)
 #define RESPONSE_SIZE_VTA (6)
@@ -15,10 +16,15 @@
 #define RESPONSE_SIZE_PIN (5)
 #define RESPONSE_SIZE_PEX (4)
 
+#define PEX_TO_PASCAL_MUL (68.94757)
+#define RETRY_COUNT (3)
+
 using rosserv = ros::ServiceServer;
 using powerboardInfo = peripherals::powerboard;
 using PowerEnableReq = peripherals::power_enable::Request;
 using PowerEnableRes = peripherals::power_enable::Response;
+using PressureAvgReq = peripherals::pressure_avg::Request;
+using PressureAvgRes = peripherals::pressure_avg::Response;
 
 class power_board{
 public:
@@ -26,6 +32,7 @@ public:
     ~power_board();
     void get_powerboard_data(powerboardInfo & msg);
     bool power_enabler(PowerEnableReq &req, PowerEnableRes &res);
+    bool average_ext_pressure(PressureAvgReq &req, PressureAvgRes &res);
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
@@ -144,8 +151,7 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
         msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
         //msg.external_pressure = (msg.external_pressure - 220) * 1241/2500;
         // Convert from 0.01psi to Pa
-        constexpr double factor = 68.94757;
-        msg.external_pressure *= factor;
+        msg.external_pressure *= PEX_TO_PASCAL_MUL;
     }
     else {      
         ROS_ERROR("External water pressure data is invalid."); 
@@ -175,6 +181,42 @@ bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
     write(out);
 }
 
+bool power_board::average_ext_pressure(PressureAvgReq &req, PressureAvgRes &res)
+{
+    // Use rate to determine read speed
+    ros::Rate r(req.acq_rate);
+
+    // Try and acquire the appropriate amount of data
+    int retry_count = 0;
+    res.avg_pressure = 0;
+    uint8_t pex_response[RESPONSE_SIZE_PEX];
+    for(int i = 0; i < req.acq_count; i++)
+    {
+        // Read the external pressure, and add to average sum.
+        if(this->write("PEX", pex_response, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) {
+            double external_pressure = (pex_response[1] << 8) | (pex_response[0]);
+            res.avg_pressure += external_pressure / req.acq_count;
+            r.sleep();
+        }
+
+        // Retry if read failed
+        else if(retry_count < RETRY_COUNT) {
+            ROS_ERROR("Failed to read pressure. Retry Count:%d", retry_count);
+            i--;
+        }
+
+        // If number of retries exceeded, fail the service call
+        else {
+            ROS_ERROR("Failed to read pressure within retry count. Service request failed.");
+            return false;
+        }
+    }
+
+    // Convert pressure to Pascals
+    res.avg_pressure *= PEX_TO_PASCAL_MUL;
+
+    return true;
+}
 
 int main(int argc, char ** argv)
 {
@@ -198,6 +240,7 @@ int main(int argc, char ** argv)
 
     ros::Publisher pub = nh.advertise<peripherals::powerboard>("power_board_data", 10);
     ros::ServiceServer pwr_en = nh.advertiseService("PowerEnable", &power_board::power_enabler, &device); 
+    ros::ServiceServer avg_ext_p = nh.advertiseService("AverageExtPresure", &power_board::average_ext_pressure, &device);
 
     // Main loop
     ros::Rate r(loop_rate);
