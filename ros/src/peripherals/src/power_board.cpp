@@ -164,25 +164,14 @@ bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
     out.replace(3, 1, req.rail_5V_pwr_enable ? "1" : "0");
     write(out);
 
-    // Enable/Disable 9V Rail
-    out.replace(1, 1, "9");
-    out.replace(3, 1, req.rail_9V_pwr_enable ? "1" : "0");
-    write(out);
-
-    // Enable/Disable 12V Rail
+    // Enable/Disable 12V/9V Rails
     out.replace(1, 1, "T");
-    out.replace(3, 1, req.rail_12V_pwr_enable ? "1" : "0");
+    out.replace(3, 1, req.rail_12V_9V_pwr_enable ? "1" : "0");
     write(out);
 
     // Enable/Disable Running Batteries in Parallel
     out = "BP0";
     out.replace(2, 1, req.parallel_batteries_enable ? "1" : "0");
-    write(out);
-
-    // Saving this for last (Disabling System power cuts power to Jetson...)
-    // Enable/Disable System Power (includes Jetson power)
-    out = "PSE1";
-    out.replace(3, 1, req.system_pwr_enable ? "1" : "0");
     write(out);
 }
 
