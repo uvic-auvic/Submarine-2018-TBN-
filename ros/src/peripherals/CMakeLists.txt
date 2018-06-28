@@ -18,7 +18,7 @@ add_service_files(
    motor.srv
    motors.srv
    power_enable.srv
-   pressure_avg.srv
+   avg_data.srv
    hydro_data.srv
 )
 
