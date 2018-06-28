@@ -12,7 +12,7 @@
 #define RESPONSE_SIZE_TMP (4)
 #define RESPONSE_SIZE_HUM (4)
 #define RESPONSE_SIZE_WTR (4)
-#define RESPONSE_SIZE_PIN (4)
+#define RESPONSE_SIZE_PIN (5)
 #define RESPONSE_SIZE_PEX (4)
 
 using rosserv = ros::ServiceServer;
@@ -85,15 +85,14 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     uint8_t* pressure_external = new uint8_t[RESPONSE_SIZE_PEX];
 
     // Populate the message with current data
-    std::size_t bytes = 0;
-    if((bytes = this->write("CRA", currents, RESPONSE_SIZE_CRA)) == RESPONSE_SIZE_CRA) {       
+    if(this->write("CRA", currents, RESPONSE_SIZE_CRA) == RESPONSE_SIZE_CRA) {       
         msg.current_battery_1 = (currents[2] << 16) | (currents[1] << 8) | (currents[0]);
         msg.current_battery_2 = (currents[5] << 16) | (currents[4] << 8) | (currents[3]);
         msg.current_motors = (currents[8] << 16) | (currents[7] << 8) | (currents[6]);
         msg.current_system = (currents[11] << 16) | (currents[10] << 8) | (currents[9]);
     }
     else {      
-        ROS_ERROR("Current data is invalid. Expected %d bytes, received %lu bytes.", RESPONSE_SIZE_CRA, bytes);
+        ROS_ERROR("Current data is invalid.");
     }
 
     // Populate message with voltage data
@@ -132,19 +131,21 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with main housing pressure data
-    if((bytes = this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN)) == RESPONSE_SIZE_PIN) {     
-        msg.internal_pressure = (pressure_internal[1] << 8) | (pressure_internal[0]);
+    if(this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN) == RESPONSE_SIZE_PIN) {     
+        msg.internal_pressure = (pressure_internal[2] << 16) | (pressure_internal[1] << 8) | (pressure_internal[0]);
         // No conversions needed, pressure is in Pa
     }
     else {      
-        ROS_ERROR("Internal housing pressure data is invalid. Expected %d bytes, received %lu bytes.", RESPONSE_SIZE_PIN, bytes); 
+        ROS_ERROR("Internal housing pressure data is invalid."); 
     }
 
     // Populate message with external water pressure data
     if(this->write("PEX", pressure_external, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) {     
         msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
+        //msg.external_pressure = (msg.external_pressure - 220) * 1241/2500;
         // Convert from 0.01psi to Pa
-        msg.external_pressure *= 68.94757;
+        constexpr double factor = 68.94757;
+        msg.external_pressure *= factor;
     }
     else {      
         ROS_ERROR("External water pressure data is invalid."); 
