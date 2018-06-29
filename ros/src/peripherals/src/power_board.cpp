@@ -84,16 +84,16 @@ std::size_t power_board::write(const std::string & out, uint8_t* in, std::size_t
 
 bool power_board::get_powerboard_data(powerboardInfo &msg) {
     // Get data from power board
-    uint8_t* currents = new uint8_t[RESPONSE_SIZE_CRA];
-    uint8_t* voltages = new uint8_t[RESPONSE_SIZE_VTA];
-    uint8_t* temperature = new uint8_t[RESPONSE_SIZE_TMP];
-    uint8_t* humidity = new uint8_t[RESPONSE_SIZE_HUM];
-    uint8_t* water = new uint8_t[RESPONSE_SIZE_WTR];
-    uint8_t* pressure_internal = new uint8_t[RESPONSE_SIZE_PIN];
-    uint8_t* pressure_external = new uint8_t[RESPONSE_SIZE_PEX];
+    std::unique_ptr<uint8_t[]> currents(new uint8_t[RESPONSE_SIZE_CRA]);
+    std::unique_ptr<uint8_t[]> voltages(new uint8_t[RESPONSE_SIZE_VTA]);
+    std::unique_ptr<uint8_t[]> temperature(new uint8_t[RESPONSE_SIZE_TMP]);
+    std::unique_ptr<uint8_t[]> humidity(new uint8_t[RESPONSE_SIZE_HUM]);
+    std::unique_ptr<uint8_t[]> water(new uint8_t[RESPONSE_SIZE_WTR]);
+    std::unique_ptr<uint8_t[]> pressure_internal(new uint8_t[RESPONSE_SIZE_PIN]);
+    std::unique_ptr<uint8_t[]> pressure_external(new uint8_t[RESPONSE_SIZE_PEX]);
 
     // Populate the message with current data
-    if( (this->write("CRA", currents, RESPONSE_SIZE_CRA) == RESPONSE_SIZE_CRA) &&
+    if( (this->write("CRA", currents.get(), RESPONSE_SIZE_CRA) == RESPONSE_SIZE_CRA) &&
         (std::memcmp(&(currents[RESPONSE_SIZE_CRA-2]), "\r\n", 2) == 0)) 
     {       
         msg.current_battery_1 = (currents[2] << 16) | (currents[1] << 8) | (currents[0]);
@@ -107,7 +107,7 @@ bool power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with voltage data
-    if( (this->write("VTA", voltages, RESPONSE_SIZE_VTA) == RESPONSE_SIZE_VTA) &&
+    if( (this->write("VTA", voltages.get(), RESPONSE_SIZE_VTA) == RESPONSE_SIZE_VTA) &&
         (std::memcmp(&(voltages[RESPONSE_SIZE_VTA-2]), "\r\n", 2) == 0))
     {        
         msg.voltage_battery_1 = (voltages[1] << 8) | (voltages[0]);
@@ -119,7 +119,7 @@ bool power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with temperature data
-    if( (this->write("TMP", temperature, RESPONSE_SIZE_TMP) == RESPONSE_SIZE_TMP) &&
+    if( (this->write("TMP", temperature.get(), RESPONSE_SIZE_TMP) == RESPONSE_SIZE_TMP) &&
         (std::memcmp(&(temperature[RESPONSE_SIZE_TMP-2]), "\r\n", 2) == 0))
     {
         // Convert to degrees C
@@ -132,7 +132,7 @@ bool power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with humidity data
-    if( (this->write("HUM", humidity, RESPONSE_SIZE_HUM) == RESPONSE_SIZE_HUM) &&
+    if( (this->write("HUM", humidity.get(), RESPONSE_SIZE_HUM) == RESPONSE_SIZE_HUM) &&
         (std::memcmp(&(humidity[RESPONSE_SIZE_HUM-2]), "\r\n", 2) == 0))
     {
         msg.humidity = (humidity[1] << 8) | (humidity[0]);
@@ -143,7 +143,7 @@ bool power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with water sensor data
-    if( (this->write("WTR", water, RESPONSE_SIZE_WTR) == RESPONSE_SIZE_WTR) &&
+    if( (this->write("WTR", water.get(), RESPONSE_SIZE_WTR) == RESPONSE_SIZE_WTR) &&
         (std::memcmp(&(water[RESPONSE_SIZE_WTR-2]), "\r\n", 2) == 0))
     {
         msg.water_sensor = (water[1] << 8) | (water[0]);
@@ -154,7 +154,7 @@ bool power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with main housing pressure data
-    if( (this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN) == RESPONSE_SIZE_PIN) &&
+    if( (this->write("PIN", pressure_internal.get(), RESPONSE_SIZE_PIN) == RESPONSE_SIZE_PIN) &&
         (std::memcmp(&(pressure_internal[RESPONSE_SIZE_PIN-2]), "\r\n", 2) == 0))
     {
         msg.internal_pressure = (pressure_internal[2] << 16) | (pressure_internal[1] << 8) | (pressure_internal[0]);
@@ -166,7 +166,7 @@ bool power_board::get_powerboard_data(powerboardInfo &msg) {
     }
 
     // Populate message with external water pressure data
-    if( (this->write("PEX", pressure_external, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) &&
+    if( (this->write("PEX", pressure_external.get(), RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) &&
         (std::memcmp(&(pressure_external[RESPONSE_SIZE_PEX-2]), "\r\n", 2) == 0))
     {
         msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
