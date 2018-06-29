@@ -174,7 +174,6 @@ int main(int argc, char ** argv)
 
     double loop_rate, max_lin_vel;
     nh.getParam("loop_rate", loop_rate);
-    nh.getParam("max_linear_vel", max_lin_vel);
 
     control_system ctrl;
 
@@ -198,10 +197,7 @@ int main(int argc, char ** argv)
         navigation::nav output_vectors;
         ctrl.compute_output_vectors(output_vectors);
 
-        // Normalize the vectors
-        output_vectors.direction.x /= max_lin_vel;
-        output_vectors.direction.y /= max_lin_vel;
-        output_vectors.direction.z /= max_lin_vel;
+        // Publish the vectors
         pub_vectors.publish(output_vectors);
 
         ros::spinOnce();

@@ -20,6 +20,7 @@ add_service_files(
    power_enable.srv
    avg_data.srv
    hydro_data.srv
+   set_vel.srv
 )
 
 add_message_files(
@@ -30,6 +31,7 @@ add_message_files(
   orientation.msg
   motor_enums.msg
   hydro.msg
+  rpms.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

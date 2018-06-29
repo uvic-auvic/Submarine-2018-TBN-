@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include "navigation/nav.h"
+#include "navigation/thrusts.h"
 #include "peripherals/motor.h"
 #include "peripherals/motors.h"
 #include "peripherals/motor_enums.h"
@@ -46,6 +47,7 @@ public:
     thrust_controller(std::string node_name);
     void generate_thrust_val(const navigation::nav::ConstPtr &msg);
     void do_thrust_matrix(double tau[E_MATRIX_COLUMNS], double thrust_value[]);
+    void populate_thrusts(navigation::thrusts &msg);
 private:
     ros::NodeHandle nh;
     ros::ServiceClient motor_forward;
@@ -55,6 +57,11 @@ private:
     ros::ServiceClient motors_stop;
 
     int16_t thrust_to_command(double thrust);
+
+    double max_angular_rate;
+    double max_linear_rate;
+
+    std::vector<int16_t> pwms;
     
     /*
     Top looking down view:
@@ -136,25 +143,25 @@ thrust_controller::thrust_controller(std::string node_name) :
     motor_reverse(nh.serviceClient<peripherals::motor>("/" + node_name + "/setMotorReverse")),
     setAllMotorsPWM(nh.serviceClient<peripherals::motors>("/" + node_name + "/setAllMotorsPWM")),
     motor_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopMotors")),
-    motors_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopAllMotors"))
-    {
-	
-    }
+    motors_stop(nh.serviceClient<peripherals::motor>("/" + node_name + "/stopAllMotors")),
+    pwms(std::vector<int16_t>(Motor_Num))
+{
+    nh.getParam("max_linear_vel", this->max_linear_rate);
+    nh.getParam("max_angular_vel", this->max_angular_rate);
+}
 
 void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg)
 {
     double tau[E_MATRIX_COLUMNS] = {
-        msg->direction.x, 
-        msg->direction.y, 
-        msg->direction.z, 
-        msg->orientation.pitch,
-        msg->orientation.roll,
-        msg->orientation.yaw
+        msg->direction.x / this->max_linear_rate, 
+        msg->direction.y / this->max_linear_rate, 
+        msg->direction.z / this->max_linear_rate, 
+        msg->orientation.pitch / this->max_angular_rate,
+        msg->orientation.roll / this->max_angular_rate,
+        msg->orientation.yaw / this->max_angular_rate
     };   
     double thruster_vals[Motor_Num] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);
-
-    std::vector<int16_t> pwms(Motor_Num);
 
     pwms[peripherals::motor_enums::X_Left - 1] = this->thrust_to_command(thruster_vals[X_LEFT_POS]);
     pwms[peripherals::motor_enums::X_Right - 1] = this->thrust_to_command(thruster_vals[X_RIGHT_POS]);
@@ -171,6 +178,10 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     this->setAllMotorsPWM.call(srv.request, srv.response);
 }
 
+void thrust_controller::populate_thrusts(navigation::thrusts &msg)
+{
+    msg.thruster_pwms = this->pwms;
+}
 
 int main(int argc, char **argv)
 {
@@ -179,7 +190,20 @@ int main(int argc, char **argv)
     ros::NodeHandle nh("~");
     thrust_controller tc("motor_controller");
     ros::Subscriber joy = nh.subscribe<navigation::nav>
-        ("/nav/navigation", 1, &thrust_controller::generate_thrust_val, &tc);
-    ros::spin();
+        ("/nav/velocity_vectors", 1, &thrust_controller::generate_thrust_val, &tc);
+    ros::Publisher thrust_pub = nh.advertise<navigation::thrusts>("/nav/thrusts", 1);
+
+    ros::Rate r(1);
+    while(ros::ok())
+    {
+        // Publish thrusters 
+        navigation::thrusts thrust_msg;
+        tc.populate_thrusts(thrust_msg);
+        thrust_pub.publish(thrust_msg);
+
+        ros::spinOnce();
+        r.sleep();
+    }
+
     return 0;
 }

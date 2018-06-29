@@ -7,6 +7,7 @@
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/imu.h"
 #include "peripherals/orientation.h"
+#include "peripherals/set_vel.h"
 #include "geometry_msgs/Vector3.h"
 
 #define RESPONSE_MAX_SIZE (23)
@@ -30,6 +31,8 @@
 #define MAG_ACCEL_GYRO_SIZE     (23)
 
 using rosserv = ros::ServiceServer;
+using VelSetReq = peripherals::set_vel::Request;
+using VelSetRes = peripherals::set_vel::Response;
 using imu_msg = peripherals::imu;
 
 class imu{
@@ -43,6 +46,7 @@ public:
     bool get_mag_accel_gyro(geometry_msgs::Vector3 &mag, geometry_msgs::Vector3 &accel, 
             geometry_msgs::Vector3 &gyro, double &time);
     void get_velocity(geometry_msgs::Vector3 &velocity_vector);
+    bool set_velocity(VelSetReq &req, VelSetRes &res);
     void update_velocity();
 private:
     void write(uint8_t command, int response_bytes = 0);
@@ -303,6 +307,12 @@ void imu::get_velocity(geometry_msgs::Vector3 &velocity_vector) {
     velocity_vector = this->velocity;
 }
 
+bool imu::set_velocity(VelSetReq &req, VelSetRes &res) {
+    this->velocity = req.velocity;
+    res.result_vel = this->velocity;
+    return true;
+}
+
 int main(int argc, char ** argv)
 {
     ros::init(argc, argv, "imu");
@@ -331,12 +341,15 @@ int main(int argc, char ** argv)
     }
 
     ROS_INFO("Using IMU on fd \"%s\"", srv.response.device_fd.c_str());
+    imu dev(srv.response.device_fd);
+
+    // Declare service calls
+    ros::ServiceServer vel_setter = nh.advertiseService("set_velocity", &imu::set_velocity, &dev);
 
     // Declare publisher
     ros::Publisher pub = nh.advertise<peripherals::imu>(topic_name, topic_buffer_size);
 
     // Update velocity "updates_per_publish" times for every topic publish
-    imu dev(srv.response.device_fd);
     ros::Rate r(publish_rate * updates_per_publish);
     uint16_t count = 0;
     while(ros::ok()) {

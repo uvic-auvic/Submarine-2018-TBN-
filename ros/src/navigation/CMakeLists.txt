@@ -22,6 +22,7 @@ find_package(
    joystick.msg
    keyboard.msg
    nav_request.msg
+   thrusts.msg
  )
 
 
