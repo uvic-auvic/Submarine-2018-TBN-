@@ -33,7 +33,7 @@ class image_converter:
         rs_image = cv2.resize(cv_image, (600, 400))
         corr_img = self.color_correct(rs_image)
         it_corr_img = self.bridge.cv2_to_imgmsg(corr_img)
-        self.pub.publish(it_corr_img)
+        self.pub.publish(it_corr_img, "bgr8")
 
     def color_correct(self, img):
         b, g, r = cv2.split(img)
