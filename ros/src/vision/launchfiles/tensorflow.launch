@@ -1,0 +1,8 @@
+<launch>
+    <arg name="topic_name" default="top_face_cam"/>
+    <arg name="gamma" default="1.3"/>
+    <node name="tf" pkg="vision" type="tensorflow.py"  required="true">
+        <param name="topic_name" value="$(arg topic_name)"/>
+        <param name="gamma" value="$(arg gamma)"/>
+    </node>
+</launch>

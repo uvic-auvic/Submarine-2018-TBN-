@@ -4,14 +4,14 @@
 
     <include file="$(find vision)/launchfiles/camera.launch"/>
     <include file="$(find webgui)/webgui.launch"/>
-    <include file="$(find monitor)/launchfiles/serial.launch"/>
-    <include file="$(find peripherals)/launchfiles/power_board.launch"/>
-    <include file="$(find peripherals)/launchfiles/imu.launch"/>
-    <include file="$(find peripherals)/launchfiles/motors.launch"/>
-    <node name="rov" pkg="navigation" type="rov"/>
-    <node name="thrustmap" pkg="navigation" type="thrustmap"/>
-
-    <group if="$(arg record)">
-        <node name="rosbag" pkg="rosbag" type="record"  args="-a -o $(arg save_location)"/> 
-    </group> 
+    <!--include file="$(find monitor)/launchfiles/serial.launch"/-->
+    <!--<include file="$(find peripherals)/launchfiles/imu.launch"/>-->
+    <!--include file="$(find peripherals)/launchfiles/motors.launch"/-->
+    <!--Maually call nodes which dont need launchfiles-->
+    <!--node name="rov" pkg="navigation" type="rov"/-->
+    <!--node name="thrustmap" pkg="navigation" type="thrustmap"/-->
+    <include file="$(find vision)/launchfiles/sonia_bag.launch">
+        <arg name="loc" value="/home/asinha/Documents/buoys/buoys-14h48-1.bag"/>
+    </include>
+    <include file="$(find vision)/launchfiles/tensorflow.launch"/>
 </launch>
