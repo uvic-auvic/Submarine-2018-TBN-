@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <string>
 #include <memory>
-#include <map>
 #include <serial/serial.h>
 #include "peripherals/motor.h"
 #include "peripherals/motors.h"
@@ -32,7 +31,6 @@ public:
 
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
-    std::map<std::string, uint8_t> motor_names_to_number;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
 };
 
@@ -41,16 +39,6 @@ motor_controller::motor_controller(const std::string & port, int baud_rate, int 
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
 
     peripherals::motor_enums motor_defs;
-
-    // Setup the motor name lookup dictionary
-    motor_names_to_number["Z_Front_Right"] = motor_defs.Z_Front_Right;
-    motor_names_to_number["Z_Front_Left"] = motor_defs.Z_Front_Left;
-    motor_names_to_number["Z_Back_Right"] = motor_defs.Z_Back_Right;
-    motor_names_to_number["Z_Back_Left"] = motor_defs.Z_Back_Left;
-    motor_names_to_number["X_Right"] = motor_defs.X_Right;
-    motor_names_to_number["X_Left"] = motor_defs.X_Left;
-    motor_names_to_number["Y_Front"] = motor_defs.Y_Front;
-    motor_names_to_number["Y_Back"] = motor_defs.Y_Back;
 }
 
 motor_controller::~motor_controller() {

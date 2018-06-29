@@ -4,7 +4,7 @@
 #include "peripherals/motors.h"
 #include "peripherals/motor_enums.h"
 
-#define Motor_Num    		(8)
+#define Motor_Num               (8)
 
 #define MAX_FORWARD_RPM         (3000.0)
 #define RPM_FORWARD_SQ_COEFF    (0.00000389750967963493)
@@ -22,14 +22,14 @@
 #define E_MATRIX_ROWS           (8)
 #define E_MATRIX_COLUMNS        (6)
 
-#define Z_FRONT_LEFT_POS	(0)
-#define Z_FRONT_RIGHT_POS	(1)
-#define Z_BACK_LEFT_POS		(2)
-#define Z_BACK_RIGHT_POS	(3)
-#define Y_FRONT_POS		(4)
-#define Y_BACK_POS		(5)
-#define X_LEFT_POS		(6)
-#define X_RIGHT_POS		(7)
+#define Z_FRONT_LEFT_POS        (0)
+#define Z_FRONT_RIGHT_POS       (1)
+#define Z_BACK_LEFT_POS         (2)
+#define Z_BACK_RIGHT_POS        (3)
+#define Y_FRONT_POS	        (4)
+#define Y_BACK_POS	        (5)
+#define X_LEFT_POS	        (6)
+#define X_RIGHT_POS	        (7)
 
 
 
