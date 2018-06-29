@@ -108,7 +108,6 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
         out.push_back(((char)(pwm%10) + '0'));
 	motor_num++;
     }
-    ROS_ERROR("%s", out.c_str());
     this->write(out);
     return true;
 }
