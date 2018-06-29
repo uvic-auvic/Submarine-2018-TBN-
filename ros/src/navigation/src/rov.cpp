@@ -116,7 +116,7 @@ void rov_mapper::recieve_joystick(const navigation::joystick::ConstPtr& msg) {
 
     nav.direction.x = (-1 * msg->axes[1]) / 100.0;
     nav.direction.y = (-1 * msg->axes[0]) / 100.0;
-    nav.direction.z = (-1 * msg->axes[3]) / 100.0;
+    nav.direction.z = (-1 * msg->axes[2]) / 100.0;
 
     nav_pub.publish(nav);
 

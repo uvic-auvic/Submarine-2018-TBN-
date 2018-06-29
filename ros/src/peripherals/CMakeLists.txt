@@ -29,7 +29,6 @@ add_message_files(
   imu.msg
   orientation.msg
   motor_enums.msg
-  #motor_info.msg
   hydro.msg
 )
 

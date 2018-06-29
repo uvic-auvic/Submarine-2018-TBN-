@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <string>
 #include <memory>
-#include <map>
 #include <serial/serial.h>
 #include "peripherals/motor.h"
 #include "peripherals/motors.h"
@@ -12,7 +11,7 @@
 #define NUM_CHAR_PER_RPM (2)
 #define NUM_CHAR_PER_PWM (2)
 #define NUM_CHAR_PER_DIR (1)
-#define MAX_MOTOR_VALUE (99)
+#define MAX_MOTOR_VALUE (999)
 
 using MotorReq = peripherals::motor::Request;
 using MotorRes = peripherals::motor::Response;
@@ -32,7 +31,6 @@ public:
 
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
-    std::map<std::string, uint8_t> motor_names_to_number;
     std::string write(const std::string & out, bool ignore_response = true, std::string eol = "\n");
 };
 
@@ -41,17 +39,6 @@ motor_controller::motor_controller(const std::string & port, int baud_rate, int 
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
 
     peripherals::motor_enums motor_defs;
-    //ROS_ERROR("%u", nav_msg.X_Right);
-
-    // Setup the motor name lookup dictionary
-    motor_names_to_number["Z_Front_Right"] = motor_defs.Z_Front_Right;
-    motor_names_to_number["Z_Front_Left"] = motor_defs.Z_Front_Left;
-    motor_names_to_number["Z_Back_Right"] = motor_defs.Z_Back_Right;
-    motor_names_to_number["Z_Back_Left"] = motor_defs.Z_Back_Left;
-    motor_names_to_number["X_Right"] = motor_defs.X_Right;
-    motor_names_to_number["X_Left"] = motor_defs.X_Left;
-    motor_names_to_number["Y_Front"] = motor_defs.Y_Front;
-    motor_names_to_number["Y_Back"] = motor_defs.Y_Back;
 }
 
 motor_controller::~motor_controller() {
@@ -82,14 +69,16 @@ bool motor_controller::setMotorPWM(MotorReq &req, MotorRes &res)
     if(pwm > MAX_MOTOR_VALUE) {
         pwm = MAX_MOTOR_VALUE;
     }
-    out += dir + std::to_string(pwm);
+    out += dir;
+    out += std::to_string((pwm/100) + '0');
+    out += std::to_string(((pwm%100)/10) + '0');
+    out += std::to_string((pwm%10) + '0');
     this->write(out);
     return true;
 }
 
 bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
 {
-    ROS_ERROR("SENDING STUFF OUT");
     char motor_num = '1';
     std::string out = "MSA";
     for (auto pwm : req.pwms) {
@@ -102,12 +91,12 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
             pwm = MAX_MOTOR_VALUE;
         }
         out.push_back(dir); 
-        out.push_back(((char)(pwm/10) + '0'));
+        out.push_back(((char)(pwm/100) + '0'));
+        out.push_back(((char)((pwm%100)/10) + '0'));
         out.push_back(((char)(pwm%10) + '0'));
 	motor_num++;
     }
     this->write(out);
-    ROS_ERROR(out.c_str());
     return true;
 }
 
