@@ -14,10 +14,10 @@
 #define RPM_REVERSE_SQ_COEFF    (0.00000396914500683942)
 #define RPM_SCALE_REVERSE       (MAX_REVERSE_RPM / sqrt(1.0 / RPM_REVERSE_SQ_COEFF))
 
-#define MAX_FORWARD_COMMAND     (40) //37 original
-#define MIN_FORWARD_COMMAND     (10)
-#define MAX_REVERSE_COMMAND     (30) //28 original
-#define MIN_REVERSE_COMMAND     (10)
+#define MAX_FORWARD_COMMAND     (400) //37 original
+#define MIN_FORWARD_COMMAND     (100)
+#define MAX_REVERSE_COMMAND     (300) //28 original
+#define MIN_REVERSE_COMMAND     (100)
 
 #define E_MATRIX_ROWS           (8)
 #define E_MATRIX_COLUMNS        (6)
@@ -54,7 +54,7 @@ private:
     ros::ServiceClient motor_stop;
     ros::ServiceClient motors_stop;
 
-    int8_t thrust_to_command(double thrust);
+    int16_t thrust_to_command(double thrust);
     
     /*
     Top looking down view:
@@ -92,7 +92,7 @@ void thrust_controller::do_thrust_matrix(double tau[E_MATRIX_COLUMNS], double th
     }
 }
 
-int8_t thrust_controller::thrust_to_command(double thrust){
+int16_t thrust_controller::thrust_to_command(double thrust){
     //command use to max at 300 now maxes at 100. both cover same range the command = command * 3
 
     //forward: rpm = 21.74167 (command) - 43.47222
@@ -106,7 +106,7 @@ int8_t thrust_controller::thrust_to_command(double thrust){
         
         unsigned int rpm = sqrt(thrust / RPM_FORWARD_SQ_COEFF);
         rpm = RPM_SCALE_FORWARD * rpm;
-        command = (int)((rpm + 43.47222) / 65.22501);
+        command = (int)((rpm + 43.47222) / 6.522501);
 
         if(command > MAX_FORWARD_COMMAND){
             command = MAX_FORWARD_COMMAND;
@@ -116,7 +116,7 @@ int8_t thrust_controller::thrust_to_command(double thrust){
     }else{
         unsigned int rpm = sqrt((-thrust) / RPM_REVERSE_SQ_COEFF);
         rpm = rpm * RPM_SCALE_REVERSE;
-        command = (int)((rpm + 225.50476) / 95.54571);
+        command = (int)((rpm + 225.50476) / 9.554571);
         
         if(command > MAX_REVERSE_COMMAND){
             command = MAX_REVERSE_COMMAND;

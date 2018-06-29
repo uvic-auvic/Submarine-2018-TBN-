@@ -12,7 +12,7 @@
 #define NUM_CHAR_PER_RPM (2)
 #define NUM_CHAR_PER_PWM (2)
 #define NUM_CHAR_PER_DIR (1)
-#define MAX_MOTOR_VALUE (99)
+#define MAX_MOTOR_VALUE (999)
 
 using MotorReq = peripherals::motor::Request;
 using MotorRes = peripherals::motor::Response;
@@ -81,7 +81,10 @@ bool motor_controller::setMotorPWM(MotorReq &req, MotorRes &res)
     if(pwm > MAX_MOTOR_VALUE) {
         pwm = MAX_MOTOR_VALUE;
     }
-    out += dir + std::to_string(pwm);
+    out += dir;
+    out += std::to_string((pwm/100) + '0');
+    out += std::to_string(((pwm%100)/10) + '0');
+    out += std::to_string((pwm%10) + '0');
     this->write(out);
     return true;
 }
@@ -100,10 +103,12 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
             pwm = MAX_MOTOR_VALUE;
         }
         out.push_back(dir); 
-        out.push_back(((char)(pwm/10) + '0'));
+        out.push_back(((char)(pwm/100) + '0'));
+        out.push_back(((char)((pwm%100)/10) + '0'));
         out.push_back(((char)(pwm%10) + '0'));
 	motor_num++;
     }
+    ROS_ERROR("%s", out.c_str());
     this->write(out);
     return true;
 }
