@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>AUVIC Web Interface</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  <script src="bootstrap-3.3.7-dist/js/jquery-3.3.1.min.js"></script>
+  <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/libraries/eventemitter2.min.js"></script>
+  <script type="text/javascript" src="js/libraries/roslib.min.js"></script>
+  <script type="text/javascript" type="text/javascript">
+    // Connecting to ROS
+    // -----------------
+  
+    var ros = new ROSLIB.Ros({
+      url : 'ws://' + window.location.hostname + ':9090'
+    });
+	console.log('ws://' + window.location.hostname + ':9090');
+  
+    ros.on('connection', function() {
+      console.log('Connected to websocket server.');
+    });
+  
+    ros.on('error', function(error) {
+      console.log('Error connecting to websocket server: ', error);
+    });
+  
+    ros.on('close', function() {
+      console.log('Connection to websocket server closed.');
+    });
+  
+    // Subscribing to a Topic
+    // ----------------------
+  
+    var depth_node = new ROSLIB.Topic({
+      ros : ros,
+      name : '/depth_sensor_node/depth',
+      messageType : 'peripherals/depth'
+    });
+  
+    depth_node.subscribe(function(message) {
+      //console.log('Received message on ' + depth_node.name + ': ' + message.temperature);
+      $('#depth_sensor_depth').text(message.depth);
+      $('#depth_sensor_temperature').text(message.temperature);
+    });
+
+  </script>
+  <script src="js/ros_out.js" type="text/javascript" type="text/javascript"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/index.html">Polaris</a>
+      <a class="navbar-brand" href="#">System Info</a>
+      <a class="navbar-brand" href="/stream/">Video Feeds</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <!--<li class="active"><a href="#">Home</a></li>-->
+    </ul>
+  </div>
+</nav>
+
+  <div class="container-fluid">
+  <h3>System Info</h3>
+    <div id="home_view" class="row">
+      <div class="col-lg-2">
+
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Option 1</td>
+                <td>
+                    <input id="" type="checkbox" value="">
+                </td>
+              </tr>
+
+              <tr>
+                <td>Option 2</td>
+                <td>
+                  <input id="" type="checkbox" value="">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
+
+    <div class="col-lg-2">
+      
+      <table class="table table-hover">
+          <thead>
+            <tr>
+              <th class="ros_topic_title"><h4>Power Board</h4></th>
+            </tr>
+          </thead>
+          <tbody>  
+            <tr>
+              <td>Battery 1 Voltage</td>
+              <td>
+                  <p>
+                  <span id="pb_batt_1_volt"></span> V
+                </p>
+                </td>
+            </tr>
+            <tr>
+              <td>Battery 2 Voltage</td>
+              <td>
+                  <p>
+                  <span id="pb_batt_2_volt"></span> V
+                </p>
+                </td>
+            </tr>
+          <tr>
+            <td>Motor Currents</td>
+            <td>
+              <p>
+              <span id="pb_motor_curr"></span> A
+            </p>
+            </td>
+          </tr>
+          <tr>
+            <td>System Current</td>
+            <td>
+                <p>
+                <span id="pb_system_curr"></span> A
+              </p>
+              </td>
+          </tr>
+          <tr>
+            <td>Internal Pressure</td>
+            <td>
+              <p>
+              <span id="pb_internal_pressure"></span> PSI
+            </p>
+            </td>
+          </tr>
+          <tr>
+            <td>External Pressure</td>
+            <td>
+              <p>
+              <span id="pb_external_pressure"></span> PSI
+            </p>
+            </td>
+          </tr>
+          <tr>
+            <td>Temperature Ambient</td>
+            <td>
+                <p>
+                <span id="pb_temperature"></span> &#8451;
+              </p>
+              </td>
+          </tr>
+          <tr>
+            <td>Relative Humidity</td>
+            <td>
+              <p>
+              <span id="pb_rh"></span> %
+            </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+    <div id="home_view" class="row">
+      <div class="col-lg-12">
+        <h3>ROS Out</h3>
+        <div id="ros_out_node" class="pre-scrollable">
+      </div>
+    </div>
+    </div>
+  </div>
+  
+
+</body>
+
+</html>
