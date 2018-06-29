@@ -1,9 +1,11 @@
 <launch>
-     <arg name="wait_for_signal" default="false"/>
-     <arg name="time_delay" default="30"/>
+     <arg name="can_start" default="true"/>
+     <arg name="poll_delay" default="5"/>
+     <arg name="start_delay" default="30"/>
 
-    <node name="ai_master" pkg="ai" type="master" respawn="true" respawn_delay="1" >
-        <param name="wait_for_signal" value="$(arg wait_for_signal)"/>
-        <param name="time_delay" value="$(arg wait_for_signal)"/>
+    <node name="ai_master" pkg="ai" type="master" required="true">
+        <param name="can_start" value="$(arg can_start)"/>
+        <param name="start_delay" value="$(arg start_delay)"/>
+        <param name="poll_delay" value="$(arg poll_delay)"/>
     </node>
 </launch>

@@ -9,9 +9,8 @@ using rosserv = ros::ServiceServer;
 class autonomous_manager{
 public:
     autonomous_manager() 
-        :   nh(NodeHandle("~")),
-            rss( nh.advertiseService("start_ai", &autonomous_manager::start_autonomous_mode, this))
-            poll_delay(30)
+        :   nh(ros::NodeHandle("~")),
+            rss(nh.advertiseService("start_ai", &autonomous_manager::start_autonomous_mode, this))
     {
         nh.getParam("can_start", can_start);
         nh.getParam("poll_delay", poll_delay);
@@ -29,6 +28,7 @@ public:
             return;
         }
 
+        ROS_INFO("Waiting for %d seconds before startinng...", start_delay);
         ros::Duration delay(start_delay);
         delay.sleep();
         
