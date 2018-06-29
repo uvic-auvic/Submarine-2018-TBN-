@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+
 #include <string>
 #include <memory>
 #include <serial/serial.h>
@@ -30,7 +31,7 @@ class power_board{
 public:
     power_board(const std::string & port, int baud_rate = 9600, int timeout = 1000);
     ~power_board();
-    void get_powerboard_data(powerboardInfo & msg);
+    bool get_powerboard_data(powerboardInfo & msg);
     bool power_enabler(PowerEnableReq &req, PowerEnableRes &res);
     bool average_ext_pressure(AvgDataReq &req, AvgDataRes &res);
 private:
@@ -81,7 +82,7 @@ std::size_t power_board::write(const std::string & out, uint8_t* in, std::size_t
     return connection->read(in, read_len);
 }
 
-void power_board::get_powerboard_data(powerboardInfo &msg) {
+bool power_board::get_powerboard_data(powerboardInfo &msg) {
     // Get data from power board
     uint8_t* currents = new uint8_t[RESPONSE_SIZE_CRA];
     uint8_t* voltages = new uint8_t[RESPONSE_SIZE_VTA];
@@ -92,7 +93,9 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     uint8_t* pressure_external = new uint8_t[RESPONSE_SIZE_PEX];
 
     // Populate the message with current data
-    if(this->write("CRA", currents, RESPONSE_SIZE_CRA) == RESPONSE_SIZE_CRA) {       
+    if( (this->write("CRA", currents, RESPONSE_SIZE_CRA) == RESPONSE_SIZE_CRA) &&
+        (std::memcmp(&(currents[RESPONSE_SIZE_CRA-2]), "\r\n", 2) == 0)) 
+    {       
         msg.current_battery_1 = (currents[2] << 16) | (currents[1] << 8) | (currents[0]);
         msg.current_battery_2 = (currents[5] << 16) | (currents[4] << 8) | (currents[3]);
         msg.current_motors = (currents[8] << 16) | (currents[7] << 8) | (currents[6]);
@@ -100,84 +103,105 @@ void power_board::get_powerboard_data(powerboardInfo &msg) {
     }
     else {      
         ROS_ERROR("Current data is invalid.");
+        return false;
     }
 
     // Populate message with voltage data
-    if(this->write("VTA", voltages, RESPONSE_SIZE_VTA) == RESPONSE_SIZE_VTA) {        
+    if( (this->write("VTA", voltages, RESPONSE_SIZE_VTA) == RESPONSE_SIZE_VTA) &&
+        (std::memcmp(&(voltages[RESPONSE_SIZE_VTA-2]), "\r\n", 2) == 0))
+    {        
         msg.voltage_battery_1 = (voltages[1] << 8) | (voltages[0]);
         msg.voltage_battery_2 = (voltages[3] << 8) | (voltages[2]);
     }
     else {      
         ROS_ERROR("Voltage data is invalid.");
+        return false;
     }
 
     // Populate message with temperature data
-    if(this->write("TMP", temperature, RESPONSE_SIZE_TMP) == RESPONSE_SIZE_TMP) {     
+    if( (this->write("TMP", temperature, RESPONSE_SIZE_TMP) == RESPONSE_SIZE_TMP) &&
+        (std::memcmp(&(temperature[RESPONSE_SIZE_TMP-2]), "\r\n", 2) == 0))
+    {
         // Convert to degrees C
         msg.temperature = (temperature[1] << 8) | (temperature[0]);
         msg.temperature = (msg.temperature / 10.0) - 273.15;
     }
     else {      
         ROS_ERROR("Temperature data is invalid.");
+        return false;
     }
 
     // Populate message with humidity data
-    if(this->write("HUM", humidity, RESPONSE_SIZE_HUM) == RESPONSE_SIZE_HUM) {     
+    if( (this->write("HUM", humidity, RESPONSE_SIZE_HUM) == RESPONSE_SIZE_HUM) &&
+        (std::memcmp(&(humidity[RESPONSE_SIZE_HUM-2]), "\r\n", 2) == 0))
+    {
         msg.humidity = (humidity[1] << 8) | (humidity[0]);
     }
     else {      
         ROS_ERROR("Humidity data is invalid.");
+        return false;
     }
 
     // Populate message with water sensor data
-    if(this->write("WTR", water, RESPONSE_SIZE_WTR) == RESPONSE_SIZE_WTR) {     
+    if( (this->write("WTR", water, RESPONSE_SIZE_WTR) == RESPONSE_SIZE_WTR) &&
+        (std::memcmp(&(water[RESPONSE_SIZE_WTR-2]), "\r\n", 2) == 0))
+    {
         msg.water_sensor = (water[1] << 8) | (water[0]);
     }
     else {      
         ROS_ERROR("Water data is invalid.");
+        return false;
     }
 
     // Populate message with main housing pressure data
-    if(this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN) == RESPONSE_SIZE_PIN) {     
+    if( (this->write("PIN", pressure_internal, RESPONSE_SIZE_PIN) == RESPONSE_SIZE_PIN) &&
+        (std::memcmp(&(pressure_internal[RESPONSE_SIZE_PIN-2]), "\r\n", 2) == 0))
+    {
         msg.internal_pressure = (pressure_internal[2] << 16) | (pressure_internal[1] << 8) | (pressure_internal[0]);
         // No conversions needed, pressure is in Pa
     }
     else {      
         ROS_ERROR("Internal housing pressure data is invalid."); 
+        return false;
     }
 
     // Populate message with external water pressure data
-    if(this->write("PEX", pressure_external, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) {     
+    if( (this->write("PEX", pressure_external, RESPONSE_SIZE_PEX) == RESPONSE_SIZE_PEX) &&
+        (std::memcmp(&(pressure_external[RESPONSE_SIZE_PEX-2]), "\r\n", 2) == 0))
+    {
         msg.external_pressure = (pressure_external[1] << 8) | (pressure_external[0]);
-        //msg.external_pressure = (msg.external_pressure - 220) * 1241/2500;
         // Convert from 0.01psi to Pa
         msg.external_pressure *= PEX_TO_PASCAL_MUL;
     }
     else {      
         ROS_ERROR("External water pressure data is invalid."); 
+        return false;
     }
+
+    return true;
 }
 
 bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
 {      
+    // Command structure: PXEb -> X is the system, b is either 0 or 1
+    // X can be: M for motors, 5 for 5V, T or 9 for the 9V/12V rail, or S for system
     // Enable/Disable Power to Motors
-    std::string out = "PME0";
-    out.replace(3, 1, req.motor_pwr_enable ? "1" : "0");
+    std::string out = "PME" + std::string(req.motor_pwr_enable ? "1" : "0");
     write(out);
 
-    // Enable/Disable 5V Rail
-    out.replace(1, 1, "5");
-    out.replace(3, 1, req.rail_5V_pwr_enable ? "1" : "0");
+    // Enable/Disable 5V Rail 
+    out.replace(1, 1, "5"); // Replace X position with 5 for 5V rail
+    out.replace(3, 1, req.rail_5V_pwr_enable ? "1" : "0"); // Replace b position with either 0 or 1
     write(out);
 
     // Enable/Disable 12V/9V Rails
-    out.replace(1, 1, "T");
-    out.replace(3, 1, req.rail_12V_9V_pwr_enable ? "1" : "0");
+    out.replace(1, 1, "T"); // Replace X position with T for 9V/12V rail
+    out.replace(3, 1, req.rail_12V_9V_pwr_enable ? "1" : "0"); // Replace b position with either 0 or 1
     write(out);
 
-    // Enable/Disable Running Batteries in Parallel
-    out = "BP0";
-    out.replace(2, 1, req.parallel_batteries_enable ? "1" : "0");
+    // Command structure: BPb -> b is either 0 or 1 
+    // Enable/Disable Running Batteries in Parallel 
+    out = "BP" + std::string(req.parallel_batteries_enable ? "1" : "0");
     write(out);
 }
 
@@ -247,8 +271,9 @@ int main(int argc, char ** argv)
     while(ros::ok()) {
         // Publish message to topic 
         peripherals::powerboard msg;
-        device.get_powerboard_data(msg);
-        pub.publish(msg);
+        if(device.get_powerboard_data(msg)) {
+            pub.publish(msg);
+        }
 
         // End of loop maintenance
         ros::spinOnce();
