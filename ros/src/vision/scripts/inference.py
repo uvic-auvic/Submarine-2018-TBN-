@@ -51,8 +51,8 @@ class detector:
             np.squeeze(scores),
             category_index,
             use_normalized_coordinates=True,
-            line_thickness=8,
+            line_thickness=5,
             min_score_thresh=0.95)
 
         # publish what we think we saw
-        cv2.imshow('Object detector', frame)
+        return frame
