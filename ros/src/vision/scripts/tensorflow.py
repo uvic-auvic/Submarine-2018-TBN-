@@ -15,7 +15,7 @@ def create_LUT_8UC1(x, y):
 class image_converter:
     def __init__(self):
         # ROS handles
-        topic_name = "/video/" + rospy.get_param("~topic_name")
+        topic_name = "/video/%s" % rospy.get_param("~topic_name")
         self.bridge = CvBridge()
         self.sub = rospy.Subscriber(topic_name, Image, self.convert)
         self.pub = rospy.Publisher("/video/corrected", Image, queue_size=10)
@@ -31,9 +31,9 @@ class image_converter:
     def convert(self, img):
         cv_image = self.bridge.imgmsg_to_cv2(img, "bgr8")
         rs_image = cv2.resize(cv_image, (600, 400))
-        corr_img = self.color_correct(rs_image)
-        it_corr_img = self.bridge.cv2_to_imgmsg(corr_img)
-        self.pub.publish(it_corr_img, "bgr8")
+        #corr_img = self.color_correct(rs_image)
+        it_corr_img = self.bridge.cv2_to_imgmsg(cv_image, "bgr8")
+        self.pub.publish(it_corr_img)
 
     def color_correct(self, img):
         b, g, r = cv2.split(img)
