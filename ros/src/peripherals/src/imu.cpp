@@ -4,6 +4,7 @@
 #include <serial/serial.h>
 #include <iostream>
 
+#include "fir_filter.hpp"
 #include "monitor/GetSerialDevice.h"
 #include "peripherals/imu.h"
 #include "peripherals/orientation.h"
@@ -51,6 +52,10 @@ public:
 private:
     void write(uint8_t command, int response_bytes = 0);
     bool verify_response(int response_bytes);
+
+    std::unique_ptr<fir_filter> accel_x_filter;
+    std::unique_ptr<fir_filter> accel_y_filter;
+    std::unique_ptr<fir_filter> accel_z_filter;
     std::unique_ptr<serial::Serial> connection = nullptr;
     uint8_t * response_buffer = nullptr;
     double mag_gain_scale = 1;
@@ -61,7 +66,9 @@ private:
     double last_timestamp;
 };
 
-imu::imu(const std::string & port, int baud_rate, int timeout) {
+imu::imu(const std::string & port, int baud_rate, int timeout) :
+    accel_x_filter
+{
     velocity.x = 0.0;
     velocity.y = 0.0;
     velocity.z = 0.0;

@@ -5,8 +5,8 @@
     <!--<include file="$(find vision)/launchfiles/camera.launch"/>-->
     <include file="$(find webgui)/webgui.launch"/>
     <include file="$(find monitor)/launchfiles/serial.launch"/>
-    <include file="$(find peripherals)/launchfiles/imu.launch"/>
-    <include file="$(find peripherals)/launchfiles/motors.launch"/>
+    <!--<include file="$(find peripherals)/launchfiles/imu.launch"/>-->
+    <!--<include file="$(find peripherals)/launchfiles/motors.launch"/>-->
     <include file="$(find navigation)/launchfiles/rov.launch"/>
     <include file="$(find navigation)/launchfiles/control_system.launch">
         <arg name="max_linear_vel" value="$(arg max_linear_vel)"/>
