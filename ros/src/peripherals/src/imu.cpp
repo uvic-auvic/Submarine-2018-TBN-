@@ -66,8 +66,7 @@ private:
     double last_timestamp;
 };
 
-imu::imu(const std::string & port, int baud_rate, int timeout) :
-    accel_x_filter
+imu::imu(const std::string & port, int baud_rate, int timeout)
 {
     velocity.x = 0.0;
     velocity.y = 0.0;
@@ -76,6 +75,11 @@ imu::imu(const std::string & port, int baud_rate, int timeout) :
     last_accel.y = 0.0;
     last_accel.z = 0.0;
     last_timestamp = 0.0;
+
+    double low_pass_filter[] = {-0.0085, 0.0, 0.2451, 0.5, 0.2451, 0.0, -0.0085};
+    accel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
+    accel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
+    accel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
 
     ROS_INFO("Connecting to imu on port: %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));

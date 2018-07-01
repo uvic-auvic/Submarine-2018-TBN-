@@ -8,6 +8,15 @@ fir_filter::fir_filter(std::list<double> filter_coefficients) :
         this->data.push_back(0.0);
     }
 }
+    
+fir_filter::fir_filter(double* filter_coefficients, uint8_t filter_length)
+{
+    for(int i = 0; i < filter_length; i++)
+    {
+        this->filter_coefficients.push_back(filter_coefficients[i]);
+        this->data.push_back(0.0);
+    }
+}
 
 void fir_filter::add_data(double new_data)
 {
