@@ -76,6 +76,7 @@ imu::imu(const std::string & port, int baud_rate, int timeout)
     last_accel.z = 0.0;
     last_timestamp = 0.0;
 
+    // Low Pass filter using 7 terms and Hamming Windowing function with cutoff frequency at ws/2
     double low_pass_filter[] = {-0.0085, 0.0, 0.2451, 0.5, 0.2451, 0.0, -0.0085};
     accel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
     accel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
@@ -280,11 +281,14 @@ void imu::update_velocity()
     get_mag_accel_gyro(dummy_v, accel, dummy_v, timestamp);
     get_mag_accel_gyro_stable(dummy_v, gravity, dummy_v, dummy_d);
 
-    // Subtract gravity from acceleration to get true acceleration
+    // Subtract gravity from acceleration to get true acceleration, and filter output
     geometry_msgs::Vector3 accel_true;
-    accel_true.x = accel.x - gravity.x;
-    accel_true.y = accel.y - gravity.y;
-    accel_true.z = accel.z - gravity.z;
+    this->accel_x_filter->add_data(accel.x - gravity.x);
+    this->accel_y_filter->add_data(accel.y - gravity.y);
+    this->accel_z_filter->add_data(accel.z - gravity.z);
+    accel_true.x = this->accel_x_filter->get_result();
+    accel_true.y = this->accel_y_filter->get_result();
+    accel_true.z = this->accel_z_filter->get_result();
 
     // Check if this is the first time the function was called
     if(!valid_data) {   
