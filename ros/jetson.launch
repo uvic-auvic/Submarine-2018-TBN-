@@ -1,4 +1,0 @@
-<launch>
-    <include file="$(find vision)/launchfiles/jetson_csi_cam.launch"/>
-    <include file="$(find webgui)/webgui.launch"/>
-</launch>

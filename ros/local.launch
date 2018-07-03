@@ -1,12 +1,21 @@
 <launch>
+    <!-- Arguments that can be overriden from the command line-->
+    <!-- Append argname:=argvalue to roslaunch command in order to override -->
+    <arg name="record" default="false"/>
+    <arg name="save_location" default="$(env HOME)/rosbag/auvic"/>
+    <arg name="only_compressed_regex" value="-e &quot;(^\/video(.*)compressed$)|(^(?!\/video).*$)&quot;"/>
     <arg name="max_linear_vel" value="5.0"/>
     <arg name="max_angular_vel" value="180.0"/>
 
-    <!--<include file="$(find vision)/launchfiles/camera.launch"/>-->
+    <!-- Included include files -->
     <include file="$(find webgui)/webgui.launch"/>
+    <include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="fd" value="/dev/video1"/>
+    </include>
+    <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch"/-->      
     <include file="$(find monitor)/launchfiles/serial.launch"/>
-    <!--<include file="$(find peripherals)/launchfiles/imu.launch"/>-->
-    <!--<include file="$(find peripherals)/launchfiles/motors.launch"/>-->
+    <include file="$(find peripherals)/launchfiles/power_board.launch"/>
+    <include file="$(find peripherals)/launchfiles/imu.launch"/>
     <include file="$(find navigation)/launchfiles/rov.launch"/>
     <include file="$(find navigation)/launchfiles/control_system.launch">
         <arg name="max_linear_vel" value="$(arg max_linear_vel)"/>
@@ -16,5 +25,13 @@
         <arg name="max_linear_vel" value="$(arg max_linear_vel)"/>
         <arg name="max_angular_vel" value="$(arg max_angular_vel)"/>
     </include>
-    <!--Maually call nodes which dont need launchfiles-->
+    <include file="$(find peripherals)/launchfiles/motors.launch"/>
+    <!--include file="$(find vision)/launchfiles/classifier.launch"/-->
+    <!--include file="$(find vision)/launchfiles/sonia_bag.launch">
+        <arg name="loc" value="/home/asinha/Documents/buoys/buoys-14h48-1.bag"/>
+    </include-->
+
+    <group if="$(arg record)">
+        <node name="rosbag" pkg="rosbag" type="record"  args="-o $(arg save_location) $(arg only_compressed_regex)"/> 
+    </group> 
 </launch>
