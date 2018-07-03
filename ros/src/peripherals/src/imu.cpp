@@ -79,6 +79,9 @@ imu::imu(const std::string & port, int baud_rate, int timeout)
     last_accel.z = 0.0;
     last_timestamp = 0.0;
 
+    // To view designfilt output: fvtool(filter)
+    // To save designfilt output: csvwrite('file_name.csv', filter.Coefficients)
+
     // MATLAB: low_pass_filter = designfilt('lowpassfir', 'FilterOrder', 7, 'CutoffFrequency', 0.5)
     double low_pass_filter[] = {-0.0052, -0.0229, 0.0968, 0.4313, 0.4313, 0.0968, -0.0229, -0.0052};
     accel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
