@@ -6,7 +6,7 @@
     <arg name="publish_rate" default="1"/>
     <arg name="updates_per_publish" default="100"/>
     <arg name="accel_filter_loc" default="$(find peripherals)/csv/lowpass.csv"/>
-    <arg name="vel_filter_loc" default="$(find peripherals)/csv/bandstop.csv"/>
+    <arg name="vel_filter_loc" default="$(find peripherals)/csv/highpass.csv"/>
 
     <node name="$(arg node_name)" pkg="peripherals" type="imu" respawn="true" respawn_delay="1" >
         <param name="topic_name" value="$(arg topic_name)"/>

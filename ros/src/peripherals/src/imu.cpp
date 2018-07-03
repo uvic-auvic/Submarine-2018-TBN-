@@ -57,9 +57,9 @@ private:
     std::unique_ptr<fir_filter> accel_x_filter;
     std::unique_ptr<fir_filter> accel_y_filter;
     std::unique_ptr<fir_filter> accel_z_filter;
-    std::unique_ptr<fir_filter> vel_x_filter;
-    std::unique_ptr<fir_filter> vel_y_filter;
-    std::unique_ptr<fir_filter> vel_z_filter;
+    std::unique_ptr<fir_filter> dvel_x_filter;
+    std::unique_ptr<fir_filter> dvel_y_filter;
+    std::unique_ptr<fir_filter> dvel_z_filter;
     std::unique_ptr<serial::Serial> connection = nullptr;
     uint8_t * response_buffer = nullptr;
     double mag_gain_scale = 1;
@@ -93,13 +93,12 @@ imu::imu(const std::string & port, int baud_rate, int timeout) :
     accel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(accel_filter_loc));
     accel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(accel_filter_loc));
 
-    // This bandstop is highly experimental, as it adds a large delay, and it may not actually filter drift
-    // MATLAB: bandstop_filter = designfilt('bandstopfir', 'FilterOrder', 36, 'CutoffFrequency1', 0.1, 'CutoffFrequency2', 0.15)
+    // MATLAB: highpass_filter = designfilt('highpassfir', 'FilterOrder', 9, 'CutoffFrequency', 0.05)
     std::string vel_filter_loc;
     nh.getParam("vel_filter_loc", vel_filter_loc);
-    vel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
-    vel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
-    vel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
+    dvel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
+    dvel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
+    dvel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
 
     ROS_INFO("Connecting to imu on port: %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
@@ -327,20 +326,16 @@ void imu::update_velocity()
         this_time = timestamp;
     }
 
-    /*velocity.x = velocity.x + 9.8 * 0.5 * (accel_true.x + last_accel.x) * (this_time - last_timestamp) / 1000.0;
-    velocity.y = velocity.y + 9.8 * 0.5 * (accel_true.y + last_accel.y) * (this_time - last_timestamp) / 1000.0;
-    velocity.z = velocity.z + 9.8 * 0.5 * (accel_true.z + last_accel.z) * (this_time - last_timestamp) / 1000.0;*/
-
-    // Compute the velocity by integrating the acceleration using trapezoid method of integration
+    // Compute the change in velocity by integrating the acceleration using trapezoid method of integration
     constexpr double unit_conversion = 9.8 * 0.5 / 1000.0;
-    vel_x_filter->add_data(velocity.x + unit_conversion * (accel_true.x + last_accel.x) * (this_time - last_timestamp));
-    vel_y_filter->add_data(velocity.y + unit_conversion * (accel_true.y + last_accel.y) * (this_time - last_timestamp));
-    vel_z_filter->add_data(velocity.z + unit_conversion * (accel_true.z + last_accel.z) * (this_time - last_timestamp));
+    dvel_x_filter->add_data(unit_conversion * (accel_true.x + last_accel.x) * (this_time - last_timestamp));
+    dvel_y_filter->add_data(unit_conversion * (accel_true.y + last_accel.y) * (this_time - last_timestamp));
+    dvel_z_filter->add_data(unit_conversion * (accel_true.z + last_accel.z) * (this_time - last_timestamp));
 
-    // Filter velocity using bandstop filter to remove drift
-    velocity.x = vel_x_filter->get_result();
-    velocity.y = vel_y_filter->get_result();
-    velocity.z = vel_z_filter->get_result();
+    // Filter change in velocity, and add to old velocity to complete integration
+    velocity.x += dvel_x_filter->get_result();
+    velocity.y += dvel_y_filter->get_result();
+    velocity.z += dvel_z_filter->get_result();
 
     // Update accel and timestamp
     last_accel = accel_true;
