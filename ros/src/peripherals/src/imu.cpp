@@ -56,6 +56,9 @@ private:
     std::unique_ptr<fir_filter> accel_x_filter;
     std::unique_ptr<fir_filter> accel_y_filter;
     std::unique_ptr<fir_filter> accel_z_filter;
+    std::unique_ptr<fir_filter> vel_x_filter;
+    std::unique_ptr<fir_filter> vel_y_filter;
+    std::unique_ptr<fir_filter> vel_z_filter;
     std::unique_ptr<serial::Serial> connection = nullptr;
     uint8_t * response_buffer = nullptr;
     double mag_gain_scale = 1;
@@ -76,11 +79,23 @@ imu::imu(const std::string & port, int baud_rate, int timeout)
     last_accel.z = 0.0;
     last_timestamp = 0.0;
 
-    // Low Pass filter using 7 terms and Hamming Windowing function with cutoff frequency at ws/2
-    double low_pass_filter[] = {-0.0085, 0.0, 0.2451, 0.5, 0.2451, 0.0, -0.0085};
+    // MATLAB: low_pass_filter = designfilt('lowpassfir', 'FilterOrder', 7, 'CutoffFrequency', 0.5)
+    double low_pass_filter[] = {-0.0052, -0.0229, 0.0968, 0.4313, 0.4313, 0.0968, -0.0229, -0.0052};
     accel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
     accel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
     accel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
+
+    // This bandstop is highly experimental, as it adds a large delay, and it may not actually filter drift
+    // MATLAB: bandstop_filter = designfilt('bandstopfir', 'FilterOrder', 36, 'CutoffFrequency1', 0.1, 'CutoffFrequency2', 0.15)
+    double bandstop_filter[] = {
+        -0.002, -0.0029, -0.0041, -0.0051, -0.0054, -0.0039, -5.3864e-18, 0.0065, 0.0147,
+        0.023, 0.029, 0.0307, 0.0263, 0.0156, 2.4809e-17, -0.0178, -0.0343, -0.0459, 0.9515,
+        -0.0459, -0.0343, -0.0178, 2.4809e-17, 0.0156, 0.0263, 0.0307, 0.029, 0.023, 
+        0.0147, 0.0065, -5.3864e-18, -0.0039, -0.0054, -0.0051, -0.0041, -0.0029, -0.002
+    };
+    vel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(bandstop_filter, sizeof(bandstop_filter) / sizeof(double)));
+    vel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(bandstop_filter, sizeof(bandstop_filter) / sizeof(double)));
+    vel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(bandstop_filter, sizeof(bandstop_filter) / sizeof(double)));
 
     ROS_INFO("Connecting to imu on port: %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
@@ -308,10 +323,20 @@ void imu::update_velocity()
         this_time = timestamp;
     }
 
-    // Compute the velocity by integrating the acceleration using trapezoid method of integration
-    velocity.x = velocity.x + 9.8 * 0.5 * (accel_true.x + last_accel.x) * (this_time - last_timestamp) / 1000.0;
+    /*velocity.x = velocity.x + 9.8 * 0.5 * (accel_true.x + last_accel.x) * (this_time - last_timestamp) / 1000.0;
     velocity.y = velocity.y + 9.8 * 0.5 * (accel_true.y + last_accel.y) * (this_time - last_timestamp) / 1000.0;
-    velocity.z = velocity.z + 9.8 * 0.5 * (accel_true.z + last_accel.z) * (this_time - last_timestamp) / 1000.0;
+    velocity.z = velocity.z + 9.8 * 0.5 * (accel_true.z + last_accel.z) * (this_time - last_timestamp) / 1000.0;*/
+
+    // Compute the velocity by integrating the acceleration using trapezoid method of integration
+    constexpr double unit_conversion = 9.8 * 0.5 / 1000.0;
+    vel_x_filter->add_data(velocity.x + unit_conversion * (accel_true.x + last_accel.x) * (this_time - last_timestamp));
+    vel_y_filter->add_data(velocity.y + unit_conversion * (accel_true.y + last_accel.y) * (this_time - last_timestamp));
+    vel_z_filter->add_data(velocity.z + unit_conversion * (accel_true.z + last_accel.z) * (this_time - last_timestamp));
+
+    // Filter velocity using bandstop filter to remove drift
+    velocity.x = vel_x_filter->get_result();
+    velocity.y = vel_y_filter->get_result();
+    velocity.z = vel_z_filter->get_result();
 
     // Update accel and timestamp
     last_accel = accel_true;
