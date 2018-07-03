@@ -1,4 +1,7 @@
 #include "fir_filter.hpp"
+#include <fstream>
+
+#include <ros/ros.h>
 
 fir_filter::fir_filter(std::list<double> filter_coefficients) :
     filter_coefficients(filter_coefficients)
@@ -16,6 +19,24 @@ fir_filter::fir_filter(double* filter_coefficients, uint8_t filter_length)
         this->filter_coefficients.push_back(filter_coefficients[i]);
         this->data.push_back(0.0);
     }
+}
+
+fir_filter::fir_filter(std::string csv_filename)
+{
+    // Open file
+    std::ifstream file(csv_filename);
+
+    // Grab all filter coefficients
+    while(file.good())
+    {
+        std::string coef_str;
+        std::getline(file, coef_str, ',');
+        this->filter_coefficients.push_back( stod(coef_str) );
+        this->data.push_back(0.0);
+    }
+
+    // Close file
+    file.close();
 }
 
 void fir_filter::add_data(double new_data)

@@ -53,6 +53,7 @@ private:
     void write(uint8_t command, int response_bytes = 0);
     bool verify_response(int response_bytes);
 
+    ros::NodeHandle nh;
     std::unique_ptr<fir_filter> accel_x_filter;
     std::unique_ptr<fir_filter> accel_y_filter;
     std::unique_ptr<fir_filter> accel_z_filter;
@@ -69,7 +70,8 @@ private:
     double last_timestamp;
 };
 
-imu::imu(const std::string & port, int baud_rate, int timeout)
+imu::imu(const std::string & port, int baud_rate, int timeout) :
+    nh(ros::NodeHandle("~"))
 {
     velocity.x = 0.0;
     velocity.y = 0.0;
@@ -79,26 +81,25 @@ imu::imu(const std::string & port, int baud_rate, int timeout)
     last_accel.z = 0.0;
     last_timestamp = 0.0;
 
+    // HOW TO DESIGN MATLAB FILTER
+    // To create filter output: filter = designfilt('filtertype', 'Param1', Val1, 'Param2', Val2, etc)
     // To view designfilt output: fvtool(filter)
     // To save designfilt output: csvwrite('file_name.csv', filter.Coefficients)
 
     // MATLAB: low_pass_filter = designfilt('lowpassfir', 'FilterOrder', 7, 'CutoffFrequency', 0.5)
-    double low_pass_filter[] = {-0.0052, -0.0229, 0.0968, 0.4313, 0.4313, 0.0968, -0.0229, -0.0052};
-    accel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
-    accel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
-    accel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(low_pass_filter, sizeof(low_pass_filter) / sizeof(double)));
+    std::string accel_filter_loc;
+    nh.getParam("accel_filter_loc", accel_filter_loc);
+    accel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(accel_filter_loc));
+    accel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(accel_filter_loc));
+    accel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(accel_filter_loc));
 
     // This bandstop is highly experimental, as it adds a large delay, and it may not actually filter drift
     // MATLAB: bandstop_filter = designfilt('bandstopfir', 'FilterOrder', 36, 'CutoffFrequency1', 0.1, 'CutoffFrequency2', 0.15)
-    double bandstop_filter[] = {
-        -0.002, -0.0029, -0.0041, -0.0051, -0.0054, -0.0039, -5.3864e-18, 0.0065, 0.0147,
-        0.023, 0.029, 0.0307, 0.0263, 0.0156, 2.4809e-17, -0.0178, -0.0343, -0.0459, 0.9515,
-        -0.0459, -0.0343, -0.0178, 2.4809e-17, 0.0156, 0.0263, 0.0307, 0.029, 0.023, 
-        0.0147, 0.0065, -5.3864e-18, -0.0039, -0.0054, -0.0051, -0.0041, -0.0029, -0.002
-    };
-    vel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(bandstop_filter, sizeof(bandstop_filter) / sizeof(double)));
-    vel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(bandstop_filter, sizeof(bandstop_filter) / sizeof(double)));
-    vel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(bandstop_filter, sizeof(bandstop_filter) / sizeof(double)));
+    std::string vel_filter_loc;
+    nh.getParam("vel_filter_loc", vel_filter_loc);
+    vel_x_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
+    vel_y_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
+    vel_z_filter = std::unique_ptr<fir_filter>(new fir_filter(vel_filter_loc));
 
     ROS_INFO("Connecting to imu on port: %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
