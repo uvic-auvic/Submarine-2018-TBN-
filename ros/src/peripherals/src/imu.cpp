@@ -381,6 +381,7 @@ int main(int argc, char ** argv)
 
     ROS_INFO("Using IMU on fd \"%s\"", srv.response.device_fd.c_str());
     imu dev(srv.response.device_fd);
+    //imu dev("/dev/ttyUSB0");
 
     // Declare service calls
     ros::ServiceServer vel_setter = nh.advertiseService("set_velocity", &imu::set_velocity, &dev);

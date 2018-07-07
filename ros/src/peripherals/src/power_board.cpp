@@ -57,7 +57,7 @@ std::string power_board::write(const std::string & out, bool ignore_response, st
 
     // Send command 
     connection->write(out + eol);
-    ROS_INFO("%s", out.c_str());
+    //ROS_INFO("%s", out.c_str());
 
     // Used for commands where response does not matter (enabling, etc)
     if (ignore_response) {
@@ -76,7 +76,7 @@ std::size_t power_board::write(const std::string & out, uint8_t* in, std::size_t
 
     // Send command 
     connection->write(out + eol);
-    ROS_INFO("%s", out.c_str());
+    //ROS_INFO("%s", out.c_str());
 
     // Read specified data length
     return connection->read(in, read_len);
