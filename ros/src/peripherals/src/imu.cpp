@@ -296,8 +296,13 @@ void imu::update_velocity()
     double timestamp;
 
     // Get new readings
-    get_mag_accel_gyro(dummy_v, accel, dummy_v, timestamp);
-    get_mag_accel_gyro_stable(dummy_v, gravity, dummy_v, dummy_d);
+    bool accel_ok = get_mag_accel_gyro(dummy_v, accel, dummy_v, timestamp);
+    bool grav_ok = get_mag_accel_gyro_stable(dummy_v, gravity, dummy_v, dummy_d);
+    if(!(accel_ok && grav_ok))
+    {
+        ROS_ERROR("Invalid message.");
+        return;
+    }
 
     // Subtract gravity from acceleration to get true acceleration, and filter output
     geometry_msgs::Vector3 accel_true;
@@ -423,7 +428,7 @@ int main(int argc, char ** argv)
                 // Publish message
                 pub.publish(msg);
 
-                ROS_INFO("Temperature: %f", msg.temperature);
+                /*ROS_INFO("Temperature: %f", msg.temperature);
                 ROS_INFO("Velocity: X:%f, Y:%f, Z:%f", msg.velocity.x, msg.velocity.y, msg.velocity.z);
                 ROS_INFO("Euler Angles: P:%f, R:%f, Y:%f", msg.euler_angles.pitch, msg.euler_angles.roll, msg.euler_angles.yaw);
                 ROS_INFO("Stabilised Mag: X:%f, Y:%f, Z:%f", msg.stabilised_magnetic_field.x, msg.stabilised_magnetic_field.y, 
@@ -439,10 +444,10 @@ int main(int argc, char ** argv)
                         msg.acceleration.z);
                 ROS_INFO("Gyro: X:%f, Y:%f, Z:%f", msg.angular_rate.x, msg.angular_rate.y, 
                         msg.angular_rate.z);
-                ROS_INFO("Instantaneous Vector Timestamp: %f\n", msg.instantaneous_vectors_timestamp);
+                ROS_INFO("Instantaneous Vector Timestamp: %f\n", msg.instantaneous_vectors_timestamp);*/
             }
             else {  
-                ROS_ERROR("Invalid message.\n");
+                ROS_ERROR("Invalid message.");
             }
         }
         ros::spinOnce();

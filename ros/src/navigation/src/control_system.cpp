@@ -39,6 +39,7 @@ private:
     peripherals::imu::ConstPtr imu_data;
     double current_depth;
     double surface_pressure;
+    bool depth_calibrated;
 };
 
 control_system::control_system():
@@ -46,7 +47,8 @@ control_system::control_system():
     current_request(boost::shared_ptr<navigation::nav_request>(new navigation::nav_request())),
     imu_data(boost::shared_ptr<peripherals::imu>(new peripherals::imu())),
     current_depth(0),
-    surface_pressure(ATMOSPHERIC_PRESSURE)
+    surface_pressure(ATMOSPHERIC_PRESSURE),
+    depth_calibrated(false)
 {
     // General Control System Parameters
     double loop_rate, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
@@ -154,17 +156,26 @@ bool control_system::calibrate_surface_depth(AvgDataReq &req, AvgDataRes &res)
 
     // Update surface pressure with the average external pressure
     surface_pressure = srv.response.avg_data;
+    depth_calibrated = true;
     return true;
 }
     
 void control_system::compute_output_vectors(navigation::nav &msg)
 {       
-    msg.direction.x = linear_vel_x->calculate(current_request->forwards_velocity, imu_data->velocity.x);
-    msg.direction.y = linear_vel_y->calculate(current_request->sideways_velocity, imu_data->velocity.y);
-    msg.direction.z = linear_pos_z->calculate(current_request->depth, current_depth, imu_data->velocity.z);
-    msg.orientation.pitch = angular_pos_p->calculate(0, imu_data->euler_angles.pitch, imu_data->compensated_angular_rate.y);
-    msg.orientation.roll = angular_pos_r->calculate(0, imu_data->euler_angles.roll, imu_data->compensated_angular_rate.x);
-    msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
+    if(depth_calibrated)
+    {
+        msg.direction.x = linear_vel_x->calculate(current_request->forwards_velocity, imu_data->velocity.x);
+        msg.direction.y = linear_vel_y->calculate(current_request->sideways_velocity, imu_data->velocity.y);
+        msg.direction.z = linear_pos_z->calculate(current_request->depth, current_depth, imu_data->velocity.z);
+        ROS_INFO("Depth: %f, Desired Depth: %f", current_depth, current_request->depth);
+        msg.orientation.pitch = angular_pos_p->calculate(0, imu_data->euler_angles.pitch, imu_data->compensated_angular_rate.y);
+        msg.orientation.roll = angular_pos_r->calculate(0, imu_data->euler_angles.roll, imu_data->compensated_angular_rate.x);
+        msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
+    }
+    else
+    {
+        ROS_INFO("Please calibrate depth sensor.");
+    }
 }
 
 int main(int argc, char ** argv)

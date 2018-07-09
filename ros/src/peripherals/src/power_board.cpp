@@ -203,6 +203,8 @@ bool power_board::power_enabler(PowerEnableReq &req, PowerEnableRes &res)
     // Enable/Disable Running Batteries in Parallel 
     out = "BP" + std::string(req.parallel_batteries_enable ? "1" : "0");
     write(out);
+
+    return true;
 }
 
 bool power_board::average_ext_pressure(AvgDataReq &req, AvgDataRes &res)

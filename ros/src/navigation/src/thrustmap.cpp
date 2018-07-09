@@ -156,20 +156,20 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
         msg->direction.x / this->max_linear_rate, 
         msg->direction.y / this->max_linear_rate, 
         msg->direction.z / this->max_linear_rate, 
-        msg->orientation.pitch / this->max_angular_rate,
-        msg->orientation.roll / this->max_angular_rate,
-        msg->orientation.yaw / this->max_angular_rate
+        2*msg->orientation.pitch / this->max_angular_rate,
+        2*msg->orientation.roll / this->max_angular_rate,
+        2*msg->orientation.yaw / this->max_angular_rate
     };   
     double thruster_vals[Motor_Num] = {0.0};
     this->do_thrust_matrix(tau, thruster_vals);
 
-    pwms[peripherals::motor_enums::X_Left - 1] = this->thrust_to_command(thruster_vals[X_LEFT_POS]);
-    pwms[peripherals::motor_enums::X_Right - 1] = this->thrust_to_command(thruster_vals[X_RIGHT_POS]);
+    pwms[peripherals::motor_enums::X_Left - 1] = -this->thrust_to_command(thruster_vals[X_LEFT_POS]);
+    pwms[peripherals::motor_enums::X_Right - 1] = -this->thrust_to_command(thruster_vals[X_RIGHT_POS]);
     pwms[peripherals::motor_enums::Y_Front - 1] = this->thrust_to_command(thruster_vals[Y_FRONT_POS]);
-    pwms[peripherals::motor_enums::Y_Back - 1] = this->thrust_to_command(thruster_vals[Y_BACK_POS]);
-    pwms[peripherals::motor_enums::Z_Front_Right - 1] = this->thrust_to_command(thruster_vals[Z_FRONT_RIGHT_POS]);
+    pwms[peripherals::motor_enums::Y_Back - 1] = -this->thrust_to_command(thruster_vals[Y_BACK_POS]);
+    pwms[peripherals::motor_enums::Z_Front_Right - 1] = -this->thrust_to_command(thruster_vals[Z_FRONT_RIGHT_POS]);
     pwms[peripherals::motor_enums::Z_Front_Left - 1] = this->thrust_to_command(thruster_vals[Z_FRONT_LEFT_POS]);
-    pwms[peripherals::motor_enums::Z_Back_Right - 1] = this->thrust_to_command(thruster_vals[Z_BACK_RIGHT_POS]);
+    pwms[peripherals::motor_enums::Z_Back_Right - 1] = -this->thrust_to_command(thruster_vals[Z_BACK_RIGHT_POS]);
     pwms[peripherals::motor_enums::Z_Back_Left - 1] = this->thrust_to_command(thruster_vals[Z_BACK_LEFT_POS]);
     
     peripherals::motors srv;
