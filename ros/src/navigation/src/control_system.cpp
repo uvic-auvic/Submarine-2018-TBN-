@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include "navigation/nav.h"
 #include "navigation/nav_request.h"
+#include "navigation/control_en.h"
 #include "peripherals/imu.h"
 #include "peripherals/powerboard.h"
 #include "peripherals/avg_data.h"
@@ -11,6 +12,8 @@
 
 using AvgDataReq = peripherals::avg_data::Request;
 using AvgDataRes = peripherals::avg_data::Response;
+using ControlEnReq = navigation::control_en::Request;
+using ControlEnRes = navigation::control_en::Response;
 
 class control_system
 {
@@ -22,6 +25,7 @@ public:
     void receive_powerboard_data(const peripherals::powerboard::ConstPtr &msg);
     void compute_output_vectors(navigation::nav &msg);
     bool calibrate_surface_depth(AvgDataReq &req, AvgDataRes &res);
+    bool control_enable_service(ControlEnReq &req, ControlEnRes &res);
 private:
     // ROS
     ros::NodeHandle nh;
@@ -40,6 +44,9 @@ private:
     double current_depth;
     double surface_pressure;
     bool depth_calibrated;
+
+    // Enables
+    ControlEnReq control_enables;
 };
 
 control_system::control_system():
@@ -50,6 +57,9 @@ control_system::control_system():
     surface_pressure(ATMOSPHERIC_PRESSURE),
     depth_calibrated(false)
 {
+    control_enables.vel_x_enable = control_enables.vel_y_enable = control_enables.vel_z_enable = true;
+    control_enables.pitch_enable = control_enables.roll_enable = control_enables.yaw_enable = true;
+
     // General Control System Parameters
     double dt, min_lin_vel, max_lin_vel, min_lin_pos, max_lin_pos;
     double min_angl_vel, max_angl_vel, min_angl_pos, max_angl_pos;
@@ -158,20 +168,42 @@ bool control_system::calibrate_surface_depth(AvgDataReq &req, AvgDataRes &res)
     return true;
 }
     
+bool control_system::control_enable_service(ControlEnReq &req, ControlEnRes &res)
+{       
+    this->control_enables = req;
+    ROS_ERROR("Her I am baby!");
+    return true;
+}
+
 void control_system::compute_output_vectors(navigation::nav &msg)
 {       
     if(depth_calibrated)
     {
-        //msg.direction.x = linear_vel_x->calculate(current_request->forwards_velocity, imu_data->velocity.x);
-        msg.direction.y = linear_vel_y->calculate(current_request->sideways_velocity, imu_data->velocity.y);
-        //msg.direction.z = linear_pos_z->calculate(current_request->depth, current_depth, imu_data->velocity.z);
+        if(control_enables.vel_x_enable)
+        {
+            //msg.direction.x = linear_vel_x->calculate(current_request->forwards_velocity, imu_data->velocity.x);
+        }
+        if(control_enables.vel_y_enable)
+        {
+            msg.direction.y = linear_vel_y->calculate(current_request->sideways_velocity, imu_data->velocity.y);
+        }
+        if(control_enables.vel_z_enable)
+        {
+            //msg.direction.z = linear_pos_z->calculate(current_request->depth, current_depth, imu_data->velocity.z);
+        }
         ROS_INFO("Depth: %f, Desired Depth: %f", current_depth, current_request->depth);
-        //msg.orientation.pitch = angular_pos_p->calculate(0, imu_data->euler_angles.pitch, imu_data->compensated_angular_rate.y);
-        msg.orientation.pitch = 0;
-        //msg.orientation.roll = angular_pos_r->calculate(0, imu_data->euler_angles.roll, imu_data->compensated_angular_rate.x);
-        msg.orientation.roll = 0;
-        //msg.orientation.yaw = -180;
-        //msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
+        if(control_enables.pitch_enable)
+        {
+            //msg.orientation.pitch = angular_pos_p->calculate(0, imu_data->euler_angles.pitch, imu_data->compensated_angular_rate.y);
+        }
+        if(control_enables.roll_enable)
+        {
+            //msg.orientation.roll = angular_pos_r->calculate(0, imu_data->euler_angles.roll, imu_data->compensated_angular_rate.x);
+        }
+        if(control_enables.yaw_enable)
+        {
+            //msg.orientation.yaw = angular_vel_yw->calculate(current_request->yaw_rate, imu_data->compensated_angular_rate.z);
+        }
     }
     else
     {
@@ -191,6 +223,9 @@ int main(int argc, char ** argv)
 
     ros::ServiceServer calib_depth = nh.advertiseService
         ("/nav/CalibrateSurfaceDepth", &control_system::calibrate_surface_depth, &ctrl);
+
+    ros::ServiceServer ctrl_en = nh.advertiseService
+        ("ControlSysEnable", &control_system::control_enable_service, &ctrl);
 
     ros::Publisher pub_vectors = nh.advertise<navigation::nav>("/nav/velocity_vectors", 1);
 
