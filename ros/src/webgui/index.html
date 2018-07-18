@@ -263,7 +263,7 @@
             </tbody>
           </table>
           <table class="table table-hover">
-          <thead>
+            <thead>
               <tr>
                 <th class="ros_topic_title"><h4>IMU</h4></th>
               </tr>
@@ -271,6 +271,16 @@
           </table>
           <button id="imu_reset">
             Reset IMU Vector
+          </button>
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th class="ros_topic_title"><h4>Depth Sensor</h4></th>
+              </tr>
+            </thead>
+          </table>
+          <button id="depth_calibrate">
+            Calibrate Surface Pressure
           </button>
       </div>
 
@@ -283,6 +293,7 @@
 
 <script src="js/services/power_board_services.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/services/imu_vector_reset.js" type="text/javascript" type="text/javascript"></script>
+<script src="js/services/calibrate_depth.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/topics/nav.js" type="text/javascript" type="text/javascript"></script>
 
 </html>

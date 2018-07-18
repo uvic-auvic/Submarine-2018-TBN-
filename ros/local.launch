@@ -9,8 +9,19 @@
 
     <!-- Included include files -->
     <include file="$(find webgui)/webgui.launch"/>
+    <include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="node_name" value="front_camera"/>
+        <arg name="topic_name" value="front_camera"/>
+        <arg name="fps" value="1"/>
+        <arg name="fd" value="/dev/video1"/>
+        <arg name="video_name" value="1"/>
+    </include>
     <!--include file="$(find vision)/launchfiles/camera.launch">
-        <arg name="fd" value="0"/>
+        <arg name="node_name" value="bottom_camera"/>
+        <arg name="topic_name" value="bottom_camera"/>
+        <arg name="fps" value="10"/>
+        <arg name="fd" value="/dev/video0"/>
+        <arg name="video_name" value="0"/>
     </include-->
     <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch"/-->      
     <include file="$(find monitor)/launchfiles/serial.launch"/>
