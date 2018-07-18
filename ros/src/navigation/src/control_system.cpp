@@ -171,7 +171,6 @@ bool control_system::calibrate_surface_depth(AvgDataReq &req, AvgDataRes &res)
 bool control_system::control_enable_service(ControlEnReq &req, ControlEnRes &res)
 {       
     this->control_enables = req;
-    ROS_ERROR("Her I am baby!");
     return true;
 }
 
