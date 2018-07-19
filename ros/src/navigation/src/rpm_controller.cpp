@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include "controllers.hpp"
 #include "navigation/thrusts.h"
+#include "navigation/rpm_control_en.h"
 #include "peripherals/rpms.h"
 #include "peripherals/motor_enums.h"
 #include "peripherals/motors.h"
@@ -21,12 +22,16 @@
 #define Z_BACK_RIGHT_MULT       (-1)
 #define Z_BACK_LEFT_MULT        (1)
 
+using RpmCtrlEnReq = navigation::rpm_control_en::Request;
+using RpmCtrlEnRes = navigation::rpm_control_en::Response;
+
 class rpm_controller
 {
 public:
     rpm_controller();
     void receive_desired_rpms(const peripherals::rpms::ConstPtr &msg);
     void receive_actual_rpms(const peripherals::rpms::ConstPtr &msg);
+    bool control_en(RpmCtrlEnReq &req, RpmCtrlEnRes &res);
     void compute_pwms(peripherals::motors &srv);
 private:
     int16_t rpm_to_pwm(double rpm);
@@ -137,6 +142,12 @@ void rpm_controller::compute_pwms(peripherals::motors &srv)
     srv.request.pwms = this->pwms;
 }
 
+bool rpm_controller::control_en(RpmCtrlEnReq &req, RpmCtrlEnRes &res)
+{
+    this->control_sys_en = req.enable;
+    return true;
+}
+
 void rpm_controller::receive_desired_rpms(const peripherals::rpms::ConstPtr &msg)
 {
     // RPMs must be in the correct order (see peripherals/msg/motor_enums.msg)
@@ -156,6 +167,7 @@ int main(int argc, char** argv) {
     ros::Subscriber des_rpms = nh.subscribe<peripherals::rpms>("/nav/rpms", 1, &rpm_controller::receive_desired_rpms, &rpm_ctrl);
     ros::Subscriber act_rpms = nh.subscribe<peripherals::rpms>("/motor_controller/MotorRpms", 1, &rpm_controller::receive_actual_rpms, &rpm_ctrl);
     ros::ServiceClient mtrs_set_all = nh.serviceClient<peripherals::motors>("/motor_controller/setAllMotorsPWM");
+    ros::ServiceServer control_en = nh.advertiseService("/nav/rpm_cntrl_en", &rpm_controller::control_en, &rpm_ctrl);
     ros::Publisher pub_pwms = nh.advertise<navigation::thrusts>("/rpm_control/pwms", 5);
 
     int loop_rate;
