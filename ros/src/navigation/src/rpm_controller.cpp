@@ -5,12 +5,21 @@
 #include "peripherals/motor_enums.h"
 #include "peripherals/motors.h"
 
-#define NUM_MOTORS (8)
+#define NUM_MOTORS              (8)
 
-#define MAX_FORWARD_PWM (400)
-#define MIN_FORWARD_PWM (100)
-#define MAX_REVERSE_PWM (300)
-#define MIN_REVERSE_PWM (100)
+#define MAX_FORWARD_PWM         (400)
+#define MIN_FORWARD_PWM         (100)
+#define MAX_REVERSE_PWM         (300)
+#define MIN_REVERSE_PWM         (100)
+
+#define X_LEFT_MULT             (-1)
+#define X_RIGHT_MULT            (-1)
+#define Y_FRONT_MULT            (1)
+#define Y_BACK_MULT             (-1)
+#define Z_FRONT_RIGHT_MULT      (-1)
+#define Z_FRONT_LEFT_MULT       (1)
+#define Z_BACK_RIGHT_MULT       (-1)
+#define Z_BACK_LEFT_MULT        (1)
 
 class rpm_controller
 {
@@ -34,13 +43,17 @@ private:
 
     // Variables
     std::vector<int16_t> pwms;
+    std::vector<int16_t> pwm_multipliers;
+    bool control_sys_en;
 };
 
 rpm_controller::rpm_controller():
     nh(ros::NodeHandle("~")),
     current_rpm_des(NUM_MOTORS),
     current_rpm_act(NUM_MOTORS),
-    pwms(NUM_MOTORS)
+    pwms(NUM_MOTORS),
+    pwm_multipliers(NUM_MOTORS),
+    control_sys_en(true)
 {
     double loop_rate, min_rpm, max_rpm, Kp, Ki;
     nh.getParam("loop_rate", loop_rate);
@@ -53,10 +66,21 @@ rpm_controller::rpm_controller():
     {
         thruster_controllers.push_back(std::unique_ptr<velocity_controller>(new velocity_controller(min_rpm, max_rpm, 1.0/loop_rate, Kp, Ki)));
     }
+
+    pwm_multipliers[peripherals::motor_enums::X_Right - 1] = X_RIGHT_MULT;
+    pwm_multipliers[peripherals::motor_enums::X_Left - 1] = X_LEFT_MULT;
+    pwm_multipliers[peripherals::motor_enums::Y_Front - 1] = Y_FRONT_MULT;
+    pwm_multipliers[peripherals::motor_enums::Y_Back - 1] = Y_BACK_MULT;
+    pwm_multipliers[peripherals::motor_enums::Z_Front_Right - 1] = Z_FRONT_RIGHT_MULT;
+    pwm_multipliers[peripherals::motor_enums::Z_Front_Left - 1] = Z_FRONT_LEFT_MULT;
+    pwm_multipliers[peripherals::motor_enums::Z_Back_Right - 1] = Z_BACK_RIGHT_MULT;
+    pwm_multipliers[peripherals::motor_enums::Z_Back_Left - 1] = Z_BACK_LEFT_MULT;
 }
 
 int16_t rpm_controller::rpm_to_pwm(double rpm)
 {
+    //forward: rpm = 21.74167 (pwm) - 43.47222
+    //reverse: rpm = 31.84857 (pwm) - 225.50476
     int16_t pwm = 0;
     if(rpm > 0)
     {
@@ -92,20 +116,36 @@ void rpm_controller::compute_pwms(peripherals::motors &srv)
     // Get the required PWMs to correct the RPM
     for(int i = 0; i < NUM_MOTORS; i++)
     {
-        double signed_rpm_act = (this->pwms[i] < 0) ? (-this->current_rpm_act[i]) : (this->current_rpm_act[i]);
-        double corrected_rpm = this->thruster_controllers[i]->calculate(this->current_rpm_des[i], signed_rpm_act);
-        this->pwms[i] = this->rpm_to_pwm(corrected_rpm);
+        // Compute the RPM
+        double corrected_rpm = 0;
+        if(control_sys_en)
+        {
+            // Determine the sign of the motor controller returned RPM
+            double signed_rpm_act = (this->pwms[i] < 0) ? (-this->current_rpm_act[i]) : (this->current_rpm_act[i]);
+            corrected_rpm = this->thruster_controllers[i]->calculate(this->current_rpm_des[i], signed_rpm_act);
+        }
+        else
+        {
+            corrected_rpm = this->current_rpm_des[i];
+        }
+
+        // Determine the desired PWM to achieve that RPM
+        this->pwms[i] = this->pwm_multipliers[i] * this->rpm_to_pwm(corrected_rpm);
     }
+
+    // Prepare service request
     srv.request.pwms = this->pwms;
 }
 
 void rpm_controller::receive_desired_rpms(const peripherals::rpms::ConstPtr &msg)
 {
+    // RPMs must be in the correct order (see peripherals/msg/motor_enums.msg)
     current_rpm_des = msg->rpms;
 }
 
 void rpm_controller::receive_actual_rpms(const peripherals::rpms::ConstPtr &msg)
 {
+    // RPMs must be in the correct order (see peripherals/msg/motor_enums.msg)
     current_rpm_act = msg->rpms;
 }
 
