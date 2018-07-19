@@ -167,10 +167,10 @@ void thrust_controller::generate_thrust_val(const navigation::nav::ConstPtr &msg
     pwms[peripherals::motor_enums::X_Left - 1] = 0;
     //pwms[peripherals::motor_enums::X_Right - 1] = -this->thrust_to_command(thruster_vals[X_RIGHT_POS]);
     pwms[peripherals::motor_enums::X_Right - 1] = 0;
-    //pwms[peripherals::motor_enums::Y_Front - 1] = this->thrust_to_command(thruster_vals[Y_FRONT_POS]);
-    pwms[peripherals::motor_enums::Y_Front - 1] = 0;
-    //pwms[peripherals::motor_enums::Y_Back - 1] = -this->thrust_to_command(thruster_vals[Y_BACK_POS]);
-    pwms[peripherals::motor_enums::Y_Back - 1] = 0;
+    pwms[peripherals::motor_enums::Y_Front - 1] = this->thrust_to_command(thruster_vals[Y_FRONT_POS]);
+    //pwms[peripherals::motor_enums::Y_Front - 1] = 0;
+    pwms[peripherals::motor_enums::Y_Back - 1] = -this->thrust_to_command(thruster_vals[Y_BACK_POS]);
+    //pwms[peripherals::motor_enums::Y_Back - 1] = 0;
 
     pwms[peripherals::motor_enums::Z_Front_Right - 1] = -this->thrust_to_command(thruster_vals[Z_FRONT_RIGHT_POS]);
     pwms[peripherals::motor_enums::Z_Front_Left - 1] = this->thrust_to_command(thruster_vals[Z_FRONT_LEFT_POS]);

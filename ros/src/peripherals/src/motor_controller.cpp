@@ -122,7 +122,7 @@ bool motor_controller::getRPM(peripherals::rpms &rpms_msg)
     }
 
     for(uint8_t motor = 0; motor < NUM_MOTORS; motor++){
-	rpms_msg.rpms.push_back((int16_t)((rpm_string[(motor * 2) + 1] << 8) | (rpm_string[motor * 2])));
+	rpms_msg.rpms.push_back((double)( (uint16_t)((rpm_string[(motor * 2) + 1] << 8) | (rpm_string[motor * 2])) ));
     }
     return true;
 }

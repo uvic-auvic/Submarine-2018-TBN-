@@ -1,1 +1,1 @@
-int16[] rpms 
+float64[] rpms 
