@@ -23,16 +23,17 @@ int main (int argc, char ** argv)
     image_transport::ImageTransport it(nh);
 
     std::string name, fd;
-    int video_name, fps;
+    int fps;
     nh.getParam("name", name);
     nh.getParam("fd", fd);
     nh.getParam("fps", fps);
-    nh.getParam("video_name", video_name);
 
     std::string publisher_name = "/video/" + name;
     image_transport::Publisher publisher = it.advertise(publisher_name, 5);
+
+    uint8_t video_index = (uint8_t)fd.back();
     
-    cv::VideoCapture source(video_name);
+    cv::VideoCapture source(video_index);
     if (!source.isOpened()) {
         ROS_ERROR("%s failed to open device on %s", name.c_str(), fd.c_str());
         return -1;

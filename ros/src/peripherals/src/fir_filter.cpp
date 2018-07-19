@@ -1,9 +1,7 @@
 #include "fir_filter.hpp"
 #include <fstream>
 
-#include <ros/ros.h>
-
-fir_filter::fir_filter(std::list<double> filter_coefficients) :
+fir_filter::fir_filter(std::vector<double> filter_coefficients) :
     filter_coefficients(filter_coefficients)
 {
     // Initialize data to the right size
@@ -59,11 +57,9 @@ double fir_filter::get_result()
     double result = 0.0;
 
     // Component-wise multiply the filter coefficients with the data
-    std::list<double>::iterator it_filter, it_data;
-    for(it_filter = this->filter_coefficients.begin(), it_data = this->data.begin(); 
-        it_data != this->data.end(); ++it_filter, ++it_data)
-    {
-        result += (*it_data) * (*it_filter);
+    for(int i = 0; i < this->filter_coefficients.size(); i++)
+    {   
+        result += (this->data[i]) * (this->filter_coefficients[i]);
     }
 
     return result;
