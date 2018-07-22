@@ -6,17 +6,17 @@ var power_board = new ROSLIB.Topic({
 
 function set_battery_voltage_background(id, volt)
 {
-  if(message.voltage_battery_1  < 18)
+  if(volt  < 18)
   {
-    $('#pb_batt_1_volt').css('background-color', 'red');
+    $(id).css('background-color', 'red');
   } 
-  else if(message.voltage_battery_1 < 22)
+  else if(volt < 22)
   {
-    $('#pb_batt_1_volt').css('background-color', 'yellow');
+    $(id).css('background-color', 'yellow');
   }
   else
   {
-    $('#pb_batt_1_volt').css('background-color', '');
+    $(id).css('background-color', '');
   }
 }
 
