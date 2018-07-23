@@ -1,6 +1,6 @@
 {
     "motor_controller" : {
-	"ignore" : true,
+	"ignore" : false,
         "baud" : 9600,
         "ack_message" : "RID\n",
         "ack_response" : "Motor Controller\r\n",
@@ -9,7 +9,7 @@
     },
     
     "power_board" : {
-        "ignore" : true,
+        "ignore" : false,
         "baud" : 9600,
         "ack_message" : "RID\n",
         "ack_response" : "Power_Board\r\n",
@@ -27,7 +27,7 @@
     },
     
     "imu" : {
-	"ignore" : true,
+	"ignore" : false,
         "baud" : 38400,
         "ack_message" : "0xF1",
         "ack_response" : "0xF10B780C69",
