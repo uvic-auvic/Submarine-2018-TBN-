@@ -176,8 +176,7 @@ bool control_system::control_enable_service(ControlEnReq &req, ControlEnRes &res
 
 void control_system::compute_output_vectors(navigation::nav &msg)
 {       
-    //if(depth_calibrated)
-    if(true)
+    if(depth_calibrated)
     {
         if(control_enables.vel_x_enable)
         {

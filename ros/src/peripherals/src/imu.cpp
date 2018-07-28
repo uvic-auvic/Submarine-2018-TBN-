@@ -410,13 +410,10 @@ int main(int argc, char ** argv)
 
     // Update velocity "updates_per_publish" times for every topic publish
     ros::Rate r(publish_rate);
-    uint16_t count = 0;
     while(ros::ok()) {
         peripherals::imu msg;
         bool valid_msg = true;
-
-        count = 0;
-
+        
         // Get the Temperature of the IMU
         valid_msg = dev.get_temperature(msg.temperature) && valid_msg;
 
