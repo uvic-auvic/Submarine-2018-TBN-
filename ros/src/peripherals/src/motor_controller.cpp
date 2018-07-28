@@ -47,7 +47,7 @@ private:
 };
 
 motor_controller::motor_controller(const std::string & port, int baud_rate, int timeout) :
-        pwm_multipliers(0, NUM_MOTORS)
+        pwm_multipliers(NUM_MOTORS)
 {
     ROS_INFO("Connecting to motor_controller on port: %s", port.c_str());
     connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
@@ -80,7 +80,7 @@ std::string motor_controller::write(const std::string & out, bool ignore_respons
 
 bool motor_controller::setMotorPWM(MotorReq &req, MotorRes &res)
 {
-    int16_t pwm = pwm_multipliers[req.motor_num] * req.pwm;
+    int16_t pwm = pwm_multipliers[req.motor_num - 1] * req.pwm;
     std::string out = "M" + std::to_string(req.motor_num);
     std::string dir = "F";
     if(pwm < 0) {

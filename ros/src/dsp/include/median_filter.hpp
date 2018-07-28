@@ -8,7 +8,7 @@
 
 class median_filter : public filter_base {
 public:
-    median_filter(uint8_t size) : data(0.0, size) {}
+    median_filter(uint8_t size) : data(size) {}
     void add_data(double new_data);
     void clear_data();
     double get_result();

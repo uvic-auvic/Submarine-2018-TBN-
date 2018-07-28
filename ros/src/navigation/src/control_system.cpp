@@ -136,6 +136,7 @@ void control_system::receive_powerboard_data(const peripherals::powerboard::Cons
     constexpr float div = 997 * 9.81;
     depth_filter->add_data((msg->external_pressure - surface_pressure) / div);
     current_depth = depth_filter->get_result();
+    //current_depth = (msg->external_pressure - surface_pressure) / div;
 }
 
 bool control_system::calibrate_surface_depth(AvgDataReq &req, AvgDataRes &res)
