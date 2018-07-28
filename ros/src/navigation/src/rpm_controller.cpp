@@ -108,8 +108,9 @@ void rpm_controller::compute_pwms(peripherals::motors &srv)
         if(control_sys_en)
         {
             // Determine the sign of the motor controller returned RPM
-            double signed_rpm_act = (this->previous_rpm_des[i] < 0) ? (-this->current_rpm_act[i]) : (this->current_rpm_act[i]);
-            corrected_rpm = this->thruster_controllers[i]->calculate(this->current_rpm_des[i], signed_rpm_act);
+            double signed_rpm_des = (this->current_rpm_des[i] < 0) ? (-this->current_rpm_des[i]) : (this->current_rpm_des[i]);
+            corrected_rpm = this->thruster_controllers[i]->calculate(signed_rpm_des, this->current_rpm_act[i]);
+            corrected_rpm = (this->current_rpm_des[i] < 0) ? (-corrected_rpm) : (corrected_rpm);
         }
         else
         {
@@ -159,7 +160,7 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh("~");
     rpm_controller rpm_ctrl;
     ros::Subscriber des_rpms = nh.subscribe<peripherals::rpms>("/nav/rpms", 1, &rpm_controller::receive_desired_rpms, &rpm_ctrl);
-    ros::Subscriber act_rpms = nh.subscribe<peripherals::rpms>("/motor_controller/MotorRpms", 1, &rpm_controller::receive_actual_rpms, &rpm_ctrl);
+    ros::Subscriber act_rpms = nh.subscribe<peripherals::rpms>("/motor_controller/MotorsRPMs", 1, &rpm_controller::receive_actual_rpms, &rpm_ctrl);
     ros::ServiceClient mtrs_set_all = nh.serviceClient<peripherals::motors>("/motor_controller/setAllMotorsPWM");
     ros::ServiceServer control_en = nh.advertiseService("/nav/rpm_cntrl_en", &rpm_controller::control_en, &rpm_ctrl);
     ros::Publisher pub_pwms = nh.advertise<navigation::thrusts>("/rpm_control/pwms", 5);

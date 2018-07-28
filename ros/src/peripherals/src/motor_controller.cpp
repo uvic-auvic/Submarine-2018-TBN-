@@ -174,13 +174,15 @@ int main(int argc, char ** argv)
     rosserv sm  = nh.advertiseService("stopMotor", &motor_controller::stopMotor, &m);
     rosserv sam = nh.advertiseService("setAllMotorsPWM", &motor_controller::setAllMotorsPWM, &m);
 
-    ros::Rate r(1);
+    ros::Rate r(10);
     while(ros::ok())
     {
         // Publish the RPMS to a topic
         peripherals::rpms rpms_msg;
-        m.getRPM(rpms_msg);
-        rpm_pub.publish(rpms_msg);
+        if(m.getRPM(rpms_msg))
+        {
+            rpm_pub.publish(rpms_msg);
+        }
 
         ros::spinOnce();
         r.sleep();
