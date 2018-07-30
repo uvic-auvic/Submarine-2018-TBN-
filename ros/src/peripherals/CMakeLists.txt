@@ -62,11 +62,11 @@ add_executable(motor_controller src/motor_controller.cpp)
 target_link_libraries(motor_controller ${catkin_LIBRARIES} ${serial_LIBRARIES})
 add_dependencies(motor_controller monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
-add_executable(power_board src/power_board.cpp)
+add_executable(power_board src/power_board.cpp src/filter_base.hpp src/median_filter.hpp src/median_filter.cpp)
 target_link_libraries(power_board ${catkin_LIBRARIES} ${serial_LIBRARIES})
 add_dependencies(power_board monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
-add_executable(imu src/imu.cpp src/fir_filter.hpp src/fir_filter.cpp)
+add_executable(imu src/imu.cpp src/fir_filter.hpp src/filter_base.hpp src/fir_filter.cpp)
 target_link_libraries(imu ${catkin_LIBRARIES} ${serial_LIBRARIES})
 add_dependencies(imu monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
