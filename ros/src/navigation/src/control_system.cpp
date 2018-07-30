@@ -222,6 +222,9 @@ int main(int argc, char ** argv)
 
     double loop_rate, max_lin_vel;
     nh.getParam("loop_rate", loop_rate);
+    
+    int loops_per_param_update;
+    nh.getParam("loops_per_param_update", loops_per_param_update);
 
     control_system ctrl;
 
@@ -245,7 +248,6 @@ int main(int argc, char ** argv)
         ("/power_board/power_board_data", 1, &control_system::receive_powerboard_data, &ctrl);
 
     ros::Rate r(loop_rate);
-    uint8_t loops_per_param_update = 10;
     uint8_t count = 0;
     while(ros::ok()) { 
         // Get the output vectors from the control system
@@ -255,8 +257,10 @@ int main(int argc, char ** argv)
         // Publish the vectors
         pub_vectors.publish(output_vectors);
 
-        if((++count %= loops_per_param_update) == 0)
+        if(++count == loops_per_param_update)
         {
+            count = 0;
+
             // Get the control system parameters
             navigation::depth_info parameters;
             ctrl.populate_depth_data(parameters);
