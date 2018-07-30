@@ -1,4 +1,4 @@
-function set_thruster(thruster, rpm){
+function set_thruster_color(thruster, rpm){
     var color;
     if(rpm > 0){
         color = '#008000';
