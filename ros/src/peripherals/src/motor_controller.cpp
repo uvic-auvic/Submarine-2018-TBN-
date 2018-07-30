@@ -7,6 +7,7 @@
 #include "peripherals/motors.h"
 #include "peripherals/motor_enums.h"
 #include "peripherals/rpms.h"
+#include "peripherals/get_motor_enums.h"
 
 #define NUM_MOTORS (8)
 #define NUM_CHAR_PER_RPM (2)
@@ -18,6 +19,8 @@ using MotorReq = peripherals::motor::Request;
 using MotorRes = peripherals::motor::Response;
 using MotorsReq = peripherals::motors::Request;
 using MotorsRes = peripherals::motors::Response;
+using MotorEnumsReq = peripherals::get_motor_enums::Request;
+using MotorEnumsRes = peripherals::get_motor_enums::Response;
 using rosserv = ros::ServiceServer;
 
 class motor_controller {
@@ -29,6 +32,7 @@ public:
     bool stopMotor(MotorReq &req, MotorRes &res);
     bool stopAllMotors(MotorReq &, MotorRes &);
     bool getRPM(peripherals::rpms &rpms_msg);
+    bool getMotorEnums(MotorEnumsReq &req, MotorEnumsRes &res);
 
 private:
     std::unique_ptr<serial::Serial> connection = nullptr;
@@ -101,6 +105,11 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
     return true;
 }
 
+bool motor_controller::getMotorEnums(MotorEnumsReq &req, MotorEnumsRes &res)
+{
+    
+}
+
 bool motor_controller::stopMotor(MotorReq &req, MotorRes &res)
 {
     std::string out = "SM" + std::to_string(req.motor_num);
@@ -152,6 +161,7 @@ int main(int argc, char ** argv)
     rosserv stp = nh.advertiseService("stopAllMotors", &motor_controller::stopAllMotors, &m);
     rosserv sm  = nh.advertiseService("stopMotor", &motor_controller::stopMotor, &m);
     rosserv sam = nh.advertiseService("setAllMotorsPWM", &motor_controller::setAllMotorsPWM, &m);
+    rosserv enums = nh.advertiseService("getMotorEnums", &motor_controller::getMotorEnums, &m);
 
     ros::Rate r(1);
     while(ros::ok())
