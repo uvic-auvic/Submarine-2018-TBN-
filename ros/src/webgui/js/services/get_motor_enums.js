@@ -11,7 +11,7 @@ function recv_motor_eunms(message){
         }
         motor_name = motor_name.replace(/_/g, ' ');
         
-        $("#rpm-table-body").append("<tr><td>" + motor_name + "</td><td><span id='rpm-"+message.motors[key]+"'></span> RPM</td></tr>");
+        $("#rpm-table-body").append("<tr><td>" + motor_name + "</td><td><span id='rpm-act-"+message.motors[key]+"'></span> RPM</td><td><span id='rpm-set-"+message.motors[key]+"'></span> RPM</td></tr>");
         $("#pwm-table-body").append("<tr><td>" + motor_name + "</td><td><span id='pwm-"+message.motors[key]+"'></span> Hz</td></tr>");  
     }
 }
