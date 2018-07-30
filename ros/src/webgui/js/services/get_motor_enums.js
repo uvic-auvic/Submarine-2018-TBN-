@@ -11,7 +11,8 @@ function recv_motor_eunms(message){
         }
         motor_name = motor_name.replace(/_/g, ' ');
         
-        $("#rpm-table-body").append("<tr><td>" + motor_name + "</td><td><span id='rpm-"+message.motors[key]+"'></span> RPM</td></tr>");  
+        $("#rpm-table-body").append("<tr><td>" + motor_name + "</td><td><span id='rpm-"+message.motors[key]+"'></span> RPM</td></tr>");
+        $("#pwm-table-body").append("<tr><td>" + motor_name + "</td><td><span id='pwm-"+message.motors[key]+"'></span> Hz</td></tr>");  
     }
 }
 
@@ -31,17 +32,3 @@ function call_motor_enums(){
 }
 
 call_motor_enums();
-
-var rpms_in = new ROSLIB.Topic({
-    ros : ros,
-    name : '/motor_controller/MotorsRPMs/',
-    messageType : '/peripherals/rpms/'
-});
-
-rpms_in.subscribe(function(message) {
-  //console.log('Received message on ' + depth_node.name + ': ' + message.temperature);
-  for(var k=0; k<message.rpms.length;k++)
-  {
-    $("#rpm-"+k).text(message.rpms[k]);
-  }
-});

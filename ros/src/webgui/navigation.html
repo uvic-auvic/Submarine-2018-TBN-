@@ -216,7 +216,13 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                  <th class="ros_topic_title"><h4>Power Board</h4></th>
+                  <th class="ros_topic_title">
+                    <h4>Power Board</h4>
+                  </th>
+                  <th>
+                    <button id="power_send"> Send</button>
+                    <!--<button id="power_get"> Get</button>-->
+                  </th>
                 </tr>
               </thead>
             <tbody id="system_settings">
@@ -335,14 +341,6 @@
                 </td>
               </tr>
               <tr>
-                <td>Velocity</td>
-                <td>
-                  <p> X: <span id="velocity_x"></span> <sup>m</sup>&frasl;<sub>s</sub> </p>
-                  <p> Y: <span id="velocity_y"></span> <sup>m</sup>&frasl;<sub>s</sub> </p>
-                  <p> Z: <span id="velocity_z"></span> <sup>m</sup>&frasl;<sub>s</sub> </p>
-                </td>
-              </tr>
-              <tr>
                 <td>Euler Angles</td>
                 <td>
                   <p> Roll:  <span id="euler_angles_roll"></span> &#176; </p>
@@ -398,6 +396,18 @@
           </table>
         </div>
         <div class="col-lg-2">
+          <!--<h4>Power Board</h4>-->
+          <table class="table table-hover IMU_Data">
+            <thead>
+              <tr>
+                <th class="ros_topic_title"><h4>PWMS</h4></th>
+              </tr>
+            </thead>
+            <tbody id="pwm-table-body">  
+            </tbody>
+          </table>
+      </div>
+        <div class="col-lg-2">
           <table class="table table-hover">
             <thead>
               <tr>
@@ -421,16 +431,32 @@
             </button>
           <table class="table table-hover">
             <thead>
-              <tr>
-                <th class="ros_topic_title"><h4>Depth Sensor</h4></th>
-              </tr>
+              
             </thead>
           </table>
-          <button id="depth_calibrate">
-            Calibrate Surface Pressure
-          </button>
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th class="ros_topic_title">Calibrate Depth Sensor</th>
+                <th>Offset</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>
+                  <button id="depth_calibrate">
+                    Calibrate
+                  </button>
+                </th>
+                <th>
+                    <span id="depth_pressure_offset"></span> PSI
+                </th>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
+      
   
 
 </body>
@@ -444,5 +470,5 @@
 <script src="js/topics/nav_velocity.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/topics/power_board.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/services/get_motor_enums.js" type="text/javascript" type="text/javascript"></script>
-
+<script src="js/topics/update_rpms.js" type="text/javascript" type="text/javascript"></script>
 </html>
