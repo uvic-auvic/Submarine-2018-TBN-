@@ -107,14 +107,14 @@ bool motor_controller::setAllMotorsPWM(MotorsReq &req, MotorsRes &res)
 
 bool motor_controller::getMotorEnums(MotorEnumsReq &req, MotorEnumsRes &res)
 {
-    res.motors.X_Right_idx = (peripherals::motor_enums::X_Right - 1);
-    res.motors.X_Left_idx = (peripherals::motor_enums::X_Left - 1);
-    res.motors.Y_Front_idx = (peripherals::motor_enums::Y_Front - 1);
-    res.motors.Y_Back_idx = (peripherals::motor_enums::Y_Back - 1);
-    res.motors.Z_Front_Left_idx = (peripherals::motor_enums::Z_Front_Left - 1);
-    res.motors.Z_Front_Right_idx = (peripherals::motor_enums::Z_Front_Right - 1);
-    res.motors.Z_Back_Left_idx = (peripherals::motor_enums::Z_Back_Left - 1);
-    res.motors.Z_Back_Right_idx = (peripherals::motor_enums::Z_Back_Right - 1);
+    res.motors.X_Right_idx = peripherals::motor_enums::X_Right - 1;
+    res.motors.X_Left_idx = peripherals::motor_enums::X_Left - 1;
+    res.motors.Y_Front_idx = peripherals::motor_enums::Y_Front - 1;
+    res.motors.Y_Back_idx = peripherals::motor_enums::Y_Back - 1;
+    res.motors.Z_Front_Left_idx = peripherals::motor_enums::Z_Front_Left - 1;
+    res.motors.Z_Front_Right_idx = peripherals::motor_enums::Z_Front_Right - 1;
+    res.motors.Z_Back_Left_idx = peripherals::motor_enums::Z_Back_Left - 1;
+    res.motors.Z_Back_Right_idx = peripherals::motor_enums::Z_Back_Right - 1;
 }
 
 bool motor_controller::stopMotor(MotorReq &req, MotorRes &res)
@@ -170,7 +170,10 @@ int main(int argc, char ** argv)
     rosserv sam = nh.advertiseService("setAllMotorsPWM", &motor_controller::setAllMotorsPWM, &m);
     rosserv enums = nh.advertiseService("getMotorEnums", &motor_controller::getMotorEnums, &m);
 
-    ros::Rate r(1);
+    int loop_rate;
+    nh.getParam("loop_rate", loop_rate);
+
+    ros::Rate r(loop_rate);
     while(ros::ok())
     {
         // Publish the RPMS to a topic
