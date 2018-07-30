@@ -23,9 +23,9 @@
     </include-->
     <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch"/-->      
     <include file="$(find monitor)/launchfiles/serial.launch"/>
-    <!--<include file="$(find peripherals)/launchfiles/power_board.launch"/>
+    <include file="$(find peripherals)/launchfiles/power_board.launch"/>
     <include file="$(find peripherals)/launchfiles/imu.launch"/>
-    <include file="$(find peripherals)/launchfiles/hydrophones.launch"/>-->
+    <include file="$(find peripherals)/launchfiles/hydrophones.launch"/>
     <include file="$(find navigation)/launchfiles/rov.launch"/>
     <include file="$(find navigation)/launchfiles/control_system.launch">
         <arg name="max_linear_vel" value="$(arg max_linear_vel)"/>

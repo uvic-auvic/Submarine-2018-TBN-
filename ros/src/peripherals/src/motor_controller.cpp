@@ -159,7 +159,7 @@ int main(int argc, char ** argv)
 
     ROS_INFO("Using Motor Controller on fd %s\n", srv.response.device_fd.c_str());
 
-    motor_controller m("thing");
+    motor_controller m(srv.response.device_fd);
     
     ros::Publisher rpm_pub = nh.advertise<peripherals::rpms>("MotorsRPMs", 1);
 
