@@ -80,7 +80,7 @@
               </tr>
             </thead>
             <tbody>  
-              <tr>
+              <tr id="pb_batt_1_volt_row">
                 <td>Battery 1 Voltage</td>
                 <td>
                     <p>
@@ -88,7 +88,7 @@
                   </p>
                   </td>
               </tr>
-              <tr>
+              <tr id="pb_batt_2_volt_row">
                 <td>Battery 2 Voltage</td>
                 <td>
                     <p>
@@ -387,6 +387,15 @@
               </tr>
             <tr>
           </table>
+          <table class="table table-hover IMU_Data">
+            <thead>
+              <tr>
+                <th class="ros_topic_title"><h4>RPMS</h4></th>
+              </tr>
+            </thead>
+            <tbody id="rpm-table-body">  
+            </tbody>
+          </table>
         </div>
         <div class="col-lg-2">
           <table class="table table-hover">
@@ -420,9 +429,6 @@
           <button id="depth_calibrate">
             Calibrate Surface Pressure
           </button>
-          <button id="get_motor_enums">
-            Get Motor Enums
-          </button>
         </div>
       </div>
   
@@ -436,6 +442,7 @@
 <script src="js/topics/nav.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/topics/imu.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/topics/nav_velocity.js" type="text/javascript" type="text/javascript"></script>
+<script src="js/topics/power_board.js" type="text/javascript" type="text/javascript"></script>
 <script src="js/services/get_motor_enums.js" type="text/javascript" type="text/javascript"></script>
 
 </html>
