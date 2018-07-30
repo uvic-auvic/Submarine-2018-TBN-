@@ -41,26 +41,25 @@ private:
 
 motor_controller::motor_controller(const std::string & port, int baud_rate, int timeout) {
     ROS_INFO("Connecting to motor_controller on port: %s", port.c_str());
-    //connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
+    connection = std::unique_ptr<serial::Serial>(new serial::Serial(port, (u_int32_t) baud_rate, serial::Timeout::simpleTimeout(timeout)));
 
     peripherals::motor_enums motor_defs;
 }
 
 motor_controller::~motor_controller() {
-    //this->write("STP");
-    //connection->close();
+    this->write("STP");
+    connection->close();
 }
 
 std::string motor_controller::write(const std::string & out, bool ignore_response, std::string eol)
 {
-    /*connection->flush();
+    connection->flush();
     connection->write(out + eol);
     //ROS_INFO("%s", out.c_str());
     if (ignore_response) {
         return "";
     }
-    return connection->readline(65536ul, eol);*/
-    return "";
+    return connection->readline(65536ul, eol);
 }
 
 bool motor_controller::setMotorPWM(MotorReq &req, MotorRes &res)
@@ -152,13 +151,13 @@ int main(int argc, char ** argv)
     monitor::GetSerialDevice srv;
     nh.getParam("device_id", srv.request.device_id);
 
-    /*ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
+    ros::ServiceClient client = nh.serviceClient<monitor::GetSerialDevice>("/serial_manager/GetDevicePort");
     if (!client.call(srv)) {
         ROS_ERROR("Couldn't get \"%s\" file descripter. Shutting down", srv.request.device_id.c_str());
         return 1;
     }
 
-    ROS_INFO("Using Motor Controller on fd %s\n", srv.response.device_fd.c_str());*/
+    ROS_INFO("Using Motor Controller on fd %s\n", srv.response.device_fd.c_str());
 
     motor_controller m("thing");
     
