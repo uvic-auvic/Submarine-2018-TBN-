@@ -21,6 +21,8 @@ add_service_files(
    avg_data.srv
    hydro_data.srv
    set_vel.srv
+   hydro_ffts.srv
+   hydro_phases.srv
 )
 
 add_message_files(
@@ -32,6 +34,8 @@ add_message_files(
   motor_enums.msg
   hydro.msg
   rpms.msg
+  polar_num.msg
+  hydro_fft.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
