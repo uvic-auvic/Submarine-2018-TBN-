@@ -71,7 +71,7 @@ target_link_libraries(imu ${catkin_LIBRARIES} ${serial_LIBRARIES})
 add_dependencies(imu monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
 add_executable(hydrophones src/hydrophones.cpp)
-target_link_libraries(hydrophones ${catkin_LIBRARIES} ${serial_LIBRARIES})
+target_link_libraries(hydrophones -lfftw3 ${catkin_LIBRARIES} ${serial_LIBRARIES})
 add_dependencies(hydrophones monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
 #add_executable(exec_name src/file.cpp)

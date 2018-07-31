@@ -6,6 +6,7 @@
 #include "peripherals/hydro_data.h"
 #include "peripherals/hydro.h"
 #include "monitor/GetSerialDevice.h"
+#include "fftw3.h"
 
 #define NUM_HYDROPHONES (4)
 #define PKT_HEADER_SIZE (12)
