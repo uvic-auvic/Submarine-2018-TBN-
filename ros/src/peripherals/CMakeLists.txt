@@ -22,6 +22,7 @@ add_service_files(
    avg_data.srv
    hydro_data.srv
    set_vel.srv
+   get_motor_enums.srv
 )
 
 add_message_files(
