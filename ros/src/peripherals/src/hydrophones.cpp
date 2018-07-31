@@ -106,6 +106,13 @@ hydrophones::~hydrophones()
 {      
     connection->flush();
     connection->close();
+
+    for(int i = 0; i < fftw_forward_plans.size(); i++)
+    {
+        fftw_destroy_plan(fftw_forward_plans[i]);
+        fftw_free(fftw_outputs[i]);
+        delete[] fftw_inputs[i];
+    }
 }
 
 std::string hydrophones::write(const std::string out, bool ignore_response, const std::string eol)
