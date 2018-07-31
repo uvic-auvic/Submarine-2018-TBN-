@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   serial
   monitor
+  dsp
   geometry_msgs
 )
 
@@ -23,6 +24,7 @@ add_service_files(
    set_vel.srv
    hydro_ffts.srv
    hydro_phases.srv
+   get_motor_enums.srv
 )
 
 add_message_files(
@@ -54,6 +56,7 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${dsp_INCLUDE_DIRS}
 )
 
 find_package(serial REQUIRED)
@@ -70,8 +73,8 @@ add_executable(power_board src/power_board.cpp)
 target_link_libraries(power_board ${catkin_LIBRARIES} ${serial_LIBRARIES})
 add_dependencies(power_board monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
-add_executable(imu src/imu.cpp src/fir_filter.hpp src/fir_filter.cpp)
-target_link_libraries(imu ${catkin_LIBRARIES} ${serial_LIBRARIES})
+add_executable(imu src/imu.cpp)
+target_link_libraries(imu ${catkin_LIBRARIES} ${serial_LIBRARIES} ${dsp_LIBRARIES})
 add_dependencies(imu monitor_generate_messages_cpp peripherals_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
 add_executable(hydrophones src/hydrophones.cpp)
