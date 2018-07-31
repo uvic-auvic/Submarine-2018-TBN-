@@ -1,15 +1,14 @@
-#ifndef _MEDIAN_FILTER_HPP_
-#define _MEDIAN_FILTER_HPP_
+#ifndef _FIR_FILTER_HPP_
+#define _FIR_FILTER_HPP_
 
-#include <deque>
 #include <cstdint>
+#include <deque>
 
 #include "filter_base.hpp"
 
-class median_filter : public filter_base
-{       
+class median_filter : public filter_base {
 public:
-    median_filter(uint8_t size) : data(size) {}
+    median_filter(uint8_t size) : data(0.0, size) {}
     void add_data(double new_data);
     void clear_data();
     double get_result();

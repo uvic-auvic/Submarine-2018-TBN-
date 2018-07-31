@@ -2,7 +2,7 @@
     <!-- General Control System Parameters -->
     <arg name="loop_rate" default="10.0"/>
     <arg name="loops_per_param_update" default="10"/>
-    <arg name="dt" default="1.0"/>
+    <arg name="depth_filter_size" default="5"/>
     <arg name="min_linear_vel" default="-5.0"/>
     <arg name="max_linear_vel" default="5.0"/>
     <arg name="min_angular_vel" default="-180.0"/>
