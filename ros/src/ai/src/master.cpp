@@ -25,7 +25,6 @@ public:
                 delay.sleep();
                 ros::spinOnce();
             }
-            return;
         }
 
         ROS_INFO("Waiting for %d seconds before startinng...", start_delay);
@@ -36,6 +35,7 @@ public:
 
     bool start_autonomous_mode(startreq& req, startres& res) {
         can_start = true;
+        start_delay = req.delay_start;
         return true;
     }
 
