@@ -11,17 +11,13 @@
     <include file="$(find webgui)/webgui.launch"/>
     <include file="$(find vision)/launchfiles/camera.launch">
         <arg name="node_name" value="front_camera"/>
-        <arg name="topic_name" value="front_camera"/>
         <arg name="fps" value="1"/>
         <arg name="fd" value="/dev/video1"/>
-    </include>
-    <!--include file="$(find vision)/launchfiles/camera.launch">
-        <arg name="node_name" value="bottom_camera"/>
-        <arg name="topic_name" value="bottom_camera"/>
-        <arg name="fps" value="10"/>
-        <arg name="fd" value="/dev/video0"/>
     </include-->
-    <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch"/-->
+    <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch">
+        <arg name="width" value="400"/>
+        <arg name="height" value="225"/>
+    </include-->
     <!--include file="$(find vision)/launchfiles/classifier.launch"/-->
 
     <include file="$(find monitor)/launchfiles/serial.launch"/>
