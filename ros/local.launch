@@ -2,8 +2,7 @@
     <!-- Arguments that can be overriden from the command line-->
     <!-- Append argname:=argvalue to roslaunch command in order to override -->
     <arg name="record" default="false"/>
-    <arg name="save_location" default="$(env HOME)/rosbag/auvic"/>
-    <arg name="only_compressed_regex" value="-e &quot;(^\/video(.*)compressed$)|(^(?!\/video).*$)&quot;"/>
+    <arg name="save_location" default="$(env HOME)/rosbag/main_"/>
     <arg name="max_linear_vel" value="5.0"/>
     <arg name="max_angular_vel" value="180.0"/>
 
@@ -13,10 +12,13 @@
         <arg name="node_name" value="front_camera"/>
         <arg name="fps" value="1"/>
         <arg name="fd" value="/dev/video1"/>
+        <arg name="record" value="$(arg record)">
     </include-->
     <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch">
         <arg name="width" value="400"/>
         <arg name="height" value="225"/>
+        <arg name="fps" value="1"/>
+        <arg name="record" value="$(arg record)"/>                       
     </include-->
     <!--include file="$(find vision)/launchfiles/classifier.launch"/-->
 
@@ -42,6 +44,6 @@
     </include-->
 
     <group if="$(arg record)">
-        <node name="rosbag" pkg="rosbag" type="record"  args="-a"/> 
+        <node name="rosbag" pkg="rosbag" type="record"  args="-o $(arg save_location) -a -x /video/(.*)"/> 
     </group> 
 </launch>
