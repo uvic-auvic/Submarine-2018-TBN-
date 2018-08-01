@@ -8,16 +8,20 @@
 
     <!-- Included include files -->
     <include file="$(find webgui)/webgui.launch"/>
-    <include file="$(find vision)/launchfiles/camera.launch">
-        <arg name="node_name" value="front_camera"/>
+    <!--include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="node_name" value="bottom_camera"/>
         <arg name="fps" value="1"/>
         <arg name="fd" value="/dev/video1"/>
         <arg name="record" value="$(arg record)">
     </include-->
-    <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch">
-        <arg name="width" value="400"/>
-        <arg name="height" value="225"/>
+    <!--include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="node_name" value="front_camera"/>
         <arg name="fps" value="1"/>
+        <arg name="fd" value="/dev/video2"/>
+        <arg name="record" value="$(arg record)">
+    </include-->
+
+    <!--include file="$(find vision)/launchfiles/jetson_csi_cam.launch">
         <arg name="record" value="$(arg record)"/>                       
     </include-->
     <!--include file="$(find vision)/launchfiles/classifier.launch"/-->
