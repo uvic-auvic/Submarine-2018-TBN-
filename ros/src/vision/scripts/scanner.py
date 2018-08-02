@@ -47,9 +47,9 @@ class object_scanner:
 
         centers = sorted(centers, key=lambda x: x[0], reverse=True)
         diff = abs((centers[0][0] / centers[1][0]) - 1)
-        
+
+        # 2 vertical structures not comparable enough to be markers
         if diff > 1:
-            # 2 vertical structures not comparable enough to be markers
             return
 
         x = (centers[0][1] + centers[0][2] + centers[1][1] + centers[1][2]) / 4
@@ -62,7 +62,7 @@ class object_scanner:
         center_x = self.dims[0] / 2
         offset_x = x - center_x
         msg = offset_position()
-        msg.relative_offset_x = 100 * (float(offset_x) / self.dims[0])
+        msg.relative_offset_x = 100 * (float(offset_x) / center_x)
         self.pub.publish(msg) # return the position as a percentage of the width
         
 if __name__ == '__main__':
