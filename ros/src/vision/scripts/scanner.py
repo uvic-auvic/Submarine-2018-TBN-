@@ -1,54 +1,74 @@
+#!/usr/bin/env python
+import rospy
 import cv2
-import os
-import sys
 import numpy as np
+from sensor_msgs.msg import Image
+from vision.msg import offset_position
+from cv_bridge import CvBridge, CvBridgeError
 
-cap = cv2.VideoCapture('cft.mp4')
+class object_scanner:
+    def __init__(self):
+        self.bridge = CvBridge()
+        self.sub = rospy.Subscriber(rospy.get_param("~topic_in_name"), Image, self.detect)
+        self.pub = rospy.Publisher(rospy.get_param("~topic_out_name"), offset_position, queue_size=1)
+        #self.impub = rospy.Publisher(rospy.get_param("~topic_out_name"), Image, queue_size=1)
+        self.disable = False
+        self.dims = (550, 400) # width, height
 
-while cap.isOpened():
-    ret, img = cap.read()
-    if not ret:
-        continue
-    # resize and gray
-    w, h = 550, 400
-    sized_img = cv2.resize(img, (w, h))
-    img_pp = sized_img
-    img_pp = cv2.GaussianBlur(img_pp, (9,9), 0)
-    img_pp = cv2.medianBlur(img_pp, 5)
+    def detect(self, img):
+        if self.disable:
+            return
+        
+        img = self.bridge.imgmsg_to_cv2(img, "bgr8")
+        orig_img = cv2.resize(img, self.dims)
+        cv_img = cv2.GaussianBlur(orig_img, (9,9), 0)
+        cv_img = cv2.medianBlur(cv_img, 5)
 
-    # canny edge detection
-    img_pp = cv2.Canny(img_pp, threshold1=75, threshold2=110)
+        # canny edge detection
+        cv_img = cv2.Canny(cv_img, threshold1=75, threshold2=110)
+        dst = cv2.reduce(cv_img, 0, cv2.REDUCE_SUM, dtype=cv2.CV_32S)[0]
 
-    dst = cv2.reduce(img_pp, 0, cv2.REDUCE_SUM, dtype=cv2.CV_32S)[0]
+        # find susbtrings of non-zero items in list
+        threshold = 3000
+        centers = []
+        start = -1
 
-    threshold = 3000
-    centers = []
-    start = -1
-
-    for i, val in enumerate(dst):
-        if val >= threshold:
-            if start == -1:
-                start = i
+        for i, val in enumerate(dst):
+            if val >= threshold:
+                if start == -1:
+                    start = i
             else:
                 if start != -1:
                     centers.append((sum(dst[start:i]), start, i))
                     start = -1
 
-    if len(centers) < 2:
-        continue
+        if len(centers) < 2:
+            return
 
-    centers = sorted(centers, key=lambda x: x[0], reverse=True)
-    diff = abs((centers[0][0] / centers[1][0]) - 1)
-    if diff > 1:
-        continue
-    else:
-        x = (centers[0][1] + centers[0][2] + centers[1][1] + centers[1][2]) / 4
-        cv2.line(sized_img, (x, 0), (x, h), 3)
-    #bgr_img = cv2.cvtColor(img_pp, cv2.COLOR_GRAY2BGR)
-    cv2.imshow('detect', sized_img)
-    #if cv2.waitKey(10) & 0xFF == ord('q'):
-     #   break
-    cv2.waitKey(1)
-
-cv2.destroyAllWindows()
+        centers = sorted(centers, key=lambda x: x[0], reverse=True)
+        diff = abs((centers[0][0] / centers[1][0]) - 1)
+        
+        if diff > 1:
+            # 2 vertical structures not comparable enough to be markers
+            return
+        else:
+            x = (centers[0][1] + centers[0][2] + centers[1][1] + centers[1][2]) / 4
+        cv2.line(orig_img, (x, 0), (x, self.dims[1]), 3)
+        #bgr_img = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2BGR)
+        #cv2.waitKey(1)
+        it_img = self.bridge.cv2_to_imgmsg(orig_img, "bgr8")
+        #self.impub.publish(it_img)
+        # publish position
+        center_x = self.dims[0] / 2
+        offset_x = x - center_x
+        msg = offset_position()
+        msg.relative_offset_x = 100 * (float(offset_x) / self.dims[0])
+        self.pub.publish(msg) # return the position as a percentage of the width
+        rospy.logerr(msg)
+        
+        
+if __name__ == '__main__':
+    rospy.init_node('object_scanner', anonymous=True)
+    a = object_scanner()
+    rospy.spin()
 
