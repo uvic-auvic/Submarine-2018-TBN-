@@ -51,21 +51,19 @@ class object_scanner:
         if diff > 1:
             # 2 vertical structures not comparable enough to be markers
             return
-        else:
-            x = (centers[0][1] + centers[0][2] + centers[1][1] + centers[1][2]) / 4
-        cv2.line(orig_img, (x, 0), (x, self.dims[1]), 3)
-        #bgr_img = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2BGR)
-        #cv2.waitKey(1)
-        it_img = self.bridge.cv2_to_imgmsg(orig_img, "bgr8")
+
+        x = (centers[0][1] + centers[0][2] + centers[1][1] + centers[1][2]) / 4
+        # Draw line on image to show position to move towards
+        #cv2.line(orig_img, (x, 0), (x, self.dims[1]), 3)
+        #it_img = self.bridge.cv2_to_imgmsg(orig_img, "bgr8")
         #self.impub.publish(it_img)
+        
         # publish position
         center_x = self.dims[0] / 2
         offset_x = x - center_x
         msg = offset_position()
         msg.relative_offset_x = 100 * (float(offset_x) / self.dims[0])
         self.pub.publish(msg) # return the position as a percentage of the width
-        rospy.logerr(msg)
-        
         
 if __name__ == '__main__':
     rospy.init_node('object_scanner', anonymous=True)
