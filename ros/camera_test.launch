@@ -1,7 +1,7 @@
 <launch>
     
     <arg name="front_camera" value="front_camera"/>
-    <arg name="record" value="true"/> 
+    <arg name="record" value="false"/> 
 
     <include file="$(find webgui)/webgui.launch"/>
     <include file="$(find vision)/launchfiles/scanner.launch">
