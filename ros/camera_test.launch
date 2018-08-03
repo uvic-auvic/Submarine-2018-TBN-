@@ -1,0 +1,23 @@
+<launch>
+    
+    <arg name="front_camera" value="front_camera"/>
+    <arg name="record" value="true"/> 
+
+    <include file="$(find webgui)/webgui.launch"/>
+    <include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="node_name" value="$(arg front_camera)"/>
+        <arg name="fps" value="1"/>
+        <arg name="fd" value="/dev/video0"/>
+        <arg name="record" value="$(arg record)"/>
+    </include>
+    <!--include file="$(find vision)/launchfiles/camera.launch">
+        <arg name="node_name" value="$(arg front_camera)"/>
+        <arg name="fps" value="1"/>
+        <arg name="fd" value="/dev/video1"/>
+        <arg name="record" value="$(arg record)"/>
+    </include-->
+
+    <!--<include file="$(find vision)/launchfiles/jetson_csi_cam.launch">
+        <arg name="record" value="$(arg record)"/>                       
+    </include-->
+</launch>
