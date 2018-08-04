@@ -124,7 +124,7 @@ class dice_finder:
             self.seen =True
         cv2.drawContours(orignal, contours_list, -1, (255, 0, 0), 1)
 
-        if self.seen && msg.max_dice_offset.x_offset == 0 && msg.max_dice_offset.y_offset == 0:
+        if self.seen and msg.max_dice_offset.x_offset == 0 and msg.max_dice_offset.y_offset == 0:
             pass
         else:
             self.pub.publish(msg)
