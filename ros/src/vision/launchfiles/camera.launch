@@ -11,7 +11,7 @@
           <node name="rosbag_$(arg node_name)" pkg="rosbag" type="record" args="-e /video/$(arg node_name)$ -o $(arg save_location)"/>
         </group>
 
-        <node name="$(arg node_name)" pkg="vision" type="sender" respawn="true" respawn_delay="1" launch-prefix="tmux split-window gdbtui --args">
+        <node name="$(arg node_name)" pkg="vision" type="sender" respawn="true" respawn_delay="1">
           <param name="topic_name" value="$(arg node_name)"/>
           <param name="fps" value="$(arg fps)"/>
           <param name="fd" value="$(arg fd)"/>

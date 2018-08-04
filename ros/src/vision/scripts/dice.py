@@ -12,7 +12,7 @@ class dice_finder:
         self.bridge = CvBridge()
         self.sub = rospy.Subscriber(rospy.get_param("~topic_in_name"), Image, self.detect)
         self.pub = rospy.Publisher(rospy.get_param("~topic_out_name"), dice_offsets, queue_size=1)
-        self.impub = rospy.Subscriber(rospy.get_param("~topic_out_name"), Image, queue_size=1)
+        self.impub = rospy.Publisher(rospy.get_param("~topic_out_name") + "_video", Image, queue_size=1)
         self.dims = (550, 400) # width, height
 
     def detect(self, img):
@@ -109,12 +109,12 @@ class dice_finder:
             msg.min_dice_offset.x_offset = min(clusterA_x)
             msg.min_dice_offset.y_offset = min(clusterA_y)
 
-            a_center = (int(mid_ax),int(mid_ay))
-            b_center = (int(mid_bx),int(mid_by))
+            a_center = (int(msg.min_dice_offset.x_offset),int(msg.min_dice_offset.y_offset))
+            b_center = (int(msg.max_dice_offset.x_offset),int(msg.max_dice_offset.y_offset))
 
             cv2.line(orignal,mid_point,a_center,(255,0,0),5)
             cv2.line(orignal,mid_point,b_center,(0,0,255),5)
-            cv2.drawContours(orignal, contours_list, -1, (255, 0, 0), 1)
+        cv2.drawContours(orignal, contours_list, -1, (255, 0, 0), 1)
 
         self.pub.publish(msg)
         it_img  = self.bridge.cv2_to_imgmsg(orignal, "bgr8")
