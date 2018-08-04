@@ -14,6 +14,7 @@ class dice_finder:
         self.pub = rospy.Publisher(rospy.get_param("~topic_out_name"), dice_offsets, queue_size=1)
         self.impub = rospy.Publisher(rospy.get_param("~topic_out_name") + "_video", Image, queue_size=1)
         self.dims = (550, 400) # width, height
+        self.seen = False
 
     def detect(self, img):
         msg = dice_offsets()
@@ -23,11 +24,12 @@ class dice_finder:
         msg.min_dice_offset.y_offset = 0
 
         frame = self.bridge.imgmsg_to_cv2(img, "bgr8")
-        y,x = frame.shape[:2]
-        mid_point = (int(x/2),int(y/2))
 
         # Our operations on the frame come here
         frame = cv2.resize(frame, self.dims)
+        y,x = frame.shape[:2]
+        mid_point = (int(x/2),int(y/2))
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         orignal = frame.copy()
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -104,19 +106,29 @@ class dice_finder:
                                     clusterB_y.append(y2)
 
         if clusterA_x and clusterB_y and clusterA_y and clusterB_x is not 0:
-            msg.max_dice_offset.x_offset = max(clusterB_x)
-            msg.max_dice_offset.y_offset = max(clusterB_y)
-            msg.min_dice_offset.x_offset = min(clusterA_x)
-            msg.min_dice_offset.y_offset = min(clusterA_y)
+            max_x = max(clusterB_x) - float(mid_point[0])
+            max_y = max(clusterB_y) - float(mid_point[1])
+            min_x = min(clusterA_x) - float(mid_point[0])
+            min_y = min(clusterA_y) - float(mid_point[1])
 
-            a_center = (int(msg.min_dice_offset.x_offset),int(msg.min_dice_offset.y_offset))
-            b_center = (int(msg.max_dice_offset.x_offset),int(msg.max_dice_offset.y_offset))
+            msg.max_dice_offset.x_offset = int(100 * (max_x / mid_point[0]))
+            msg.max_dice_offset.y_offset = int(100 * (max_y / mid_point[1]))
+            msg.min_dice_offset.x_offset = int(100 * (min_x / mid_point[0]))
+            msg.min_dice_offset.y_offset = int(100 * (min_y / mid_point[1]))
+
+            a_center = (msg.min_dice_offset.x_offset,msg.min_dice_offset.y_offset)
+            b_center = (msg.max_dice_offset.x_offset,msg.max_dice_offset.y_offset)
 
             cv2.line(orignal,mid_point,a_center,(255,0,0),5)
             cv2.line(orignal,mid_point,b_center,(0,0,255),5)
+            self.seen =True
         cv2.drawContours(orignal, contours_list, -1, (255, 0, 0), 1)
 
-        self.pub.publish(msg)
+        if self.seen && msg.max_dice_offset.x_offset == 0 && msg.max_dice_offset.y_offset == 0:
+            pass
+        else:
+            self.pub.publish(msg)
+            self.seen = True
         it_img  = self.bridge.cv2_to_imgmsg(orignal, "bgr8")
         self.impub.publish(it_img)
 

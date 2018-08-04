@@ -14,7 +14,7 @@
     <include file="$(find vision)/launchfiles/camera.launch">
         <arg name="node_name" value="$(arg front_camera)"/>
         <arg name="fps" value="50"/>
-        <arg name="fd" value="/home/asinha/Documents/Coursefootage.MP4"/>
+        <arg name="fd" value="/home/asinha/Documents/GOPR1151.MP4"/>
         <arg name="record" value="false"/>
         <arg name="is_device" value="false"/>
     </include>
